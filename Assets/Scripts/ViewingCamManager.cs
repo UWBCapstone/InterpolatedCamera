@@ -81,10 +81,19 @@ namespace InterpolatedCamera
             ViewingCameras = new GameObject[0];
         }
 
+        /// <summary>
+        /// Must be called after initializing the viewing cameras.
+        /// </summary>
+        /// <param name="camIndex"></param>
         private void associateClipPlane(int camIndex)
         {
             ClipPlaneManager clipPlane = ViewingCameras[camIndex].AddComponent<ClipPlaneManager>();
             UpdateViewingCameraClipPlane(camIndex);
+
+            // Add miscellaneous scripts
+            GameObject viewingCam = ViewingCameras[camIndex];
+            UVCalc uvCalc = viewingCam.AddComponent<UVCalc>();
+            uvCalc.SetRepresentativePlane(viewingCam.GetComponent<Camera>());
         }
 
         public void UpdateViewingCameraClipPlane(int camIndex)

@@ -22,7 +22,7 @@ namespace InterpolatedCamera
         public float hypotenuse;
         public float opposite;
         public float nearClipDis;
-
+        
         // Pass in the render texture camera
         public ClipPlaneManager(Camera cam)
         {
@@ -94,7 +94,7 @@ namespace InterpolatedCamera
 
             clipPlane = new PlaneRect(calc00(), calc11(), -forward);
         }
-
+        
         public static List<ClipPlaneManager> SortClipPlanes(ClipPlaneManager[] clipPlanes)
         {
             List<ClipPlaneManager> planeList = new List<ClipPlaneManager>();
