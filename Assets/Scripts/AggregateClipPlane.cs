@@ -23,17 +23,24 @@ namespace InterpolatedCamera
         // Use this for initialization
         void Start()
         {
+            Invoke("Init", 2.0f);
         }
 
         private void FixedUpdate()
         {
-            if (!initialized)
-            {
-                GameObject go = GenerateAggregateClipPlaneObject(viewingCamManager.ClipPlanes);
-                go.transform.parent = gameObject.transform;
-                //InvokeRepeating("RefreshShaderInfo", 2.0f, 2.0f);
-                Invoke("RefreshShaderInfo", 2.0f);
-            }
+
+        }
+
+        public void Init()
+        {
+            Debug.Log("Viewing cam clip plane corner01 = " + viewingCamManager.ViewingCameras[0].GetComponent<ClipPlaneManager>().ClipRect.Corner01);
+            Debug.Log("Clip planes array corner10 = " + viewingCamManager.ClipPlanes[0].clipPlane.Corner10);
+            viewingCamManager.DEBUGASSIST();
+
+            GameObject go = GenerateAggregateClipPlaneObject(viewingCamManager.ClipPlanes);
+            go.transform.parent = gameObject.transform;
+            //InvokeRepeating("RefreshShaderInfo", 2.0f, 2.0f);
+            Invoke("RefreshShaderInfo", 2.0f);
         }
 
         // Update is called once per frame
@@ -210,21 +217,85 @@ namespace InterpolatedCamera
 
                 // Assumes all planes exist in the same plane and that they 
                 // are all horizontally aligned
-                int farRightIndex = sortedClipPlanes.Length - 1;
-                int farLeftIndex = 0;
-                ClipPlaneManager farLeft = sortedClipPlanes[farLeftIndex];
-                ClipPlaneManager farRight = sortedClipPlanes[farRightIndex];
+                float leftX = sortedClipPlanes[0].clipPlane.Corner00.x;
+                float rightX = sortedClipPlanes[0].clipPlane.Corner01.x;
+                float bottomY = sortedClipPlanes[0].clipPlane.Corner00.y;
+                float topY = sortedClipPlanes[0].clipPlane.Corner10.y;
+                float z = sortedClipPlanes[0].clipPlane.Corner00.z;
+
+                //Debug.Log("Sorted clip planes length = " + sortedClipPlanes.Length);
+                //Debug.Log("Sorted clip planes:");
+                //Debug.Log("Sorted clip planes[0] corner00 = " + sortedClipPlanes[0].clipPlane.Corner00);
+                //Debug.Log("Sorted clip planes[0] corner01 = " + sortedClipPlanes[0].clipPlane.Corner01);
+                //Debug.Log("Sorted clip planes[0] corner11 = " + sortedClipPlanes[0].clipPlane.Corner11);
+                //Debug.Log("Sorted clip planes[0] corner10 = " + sortedClipPlanes[0].clipPlane.Corner10);
+
+                //Debug.Log("Unsorted clip planes[0] corner00 = " + clipPlanes[0].clipPlane.Corner00);
+                //Debug.Log("Unsorted clip planes[0] corner01 = " + clipPlanes[0].clipPlane.Corner01);
+                //Debug.Log("Unsorted clip planes[0] corner11 = " + clipPlanes[0].clipPlane.Corner11);
+                //Debug.Log("Unsorted clip planes[0] corner10 = " + clipPlanes[0].clipPlane.Corner10);
+
+                for (int i = 0; i < sortedClipPlanes.Length; i++)
+                {
+                    Vector3[] corners = new Vector3[4] {
+                        sortedClipPlanes[i].clipPlane.Corner00,
+                        sortedClipPlanes[i].clipPlane.Corner01,
+                        sortedClipPlanes[i].clipPlane.Corner11,
+                        sortedClipPlanes[i].clipPlane.Corner10
+                    };
+
+                    foreach(Vector3 corner in corners)
+                    {
+                        if (corner.x < leftX)
+                        {
+                            leftX = corner.x;
+                            Debug.Log(sortedClipPlanes[i].gameObject.name + "replaced leftX with: " + corner.x + " (" + corner + ")");
+                        }
+                        if (corner.x > rightX)
+                        {
+                            rightX = corner.x;
+                            Debug.Log(sortedClipPlanes[i].gameObject.name + "replaced rightX with: " + corner.x + " (" + corner + ")");
+                        }
+                        if (corner.y < bottomY)
+                        {
+                            bottomY = corner.y;
+                            Debug.Log(sortedClipPlanes[i].gameObject.name + "replaced bottomY with: " + corner.y + " (" + corner + ")");
+                        }
+                        if (corner.y > topY)
+                        {
+                            topY = corner.y;
+                            Debug.Log(sortedClipPlanes[i].gameObject.name + "replaced topY with: " + corner.y + " (" + corner + ")");
+                        }
+                    }
+                }
+
                 PlaneRect newPlane = new PlaneRect(
-                    farLeft.ClipRect.Corner00, // lower left
-                    farLeft.ClipRect.Corner01, // upper left
-                    farRight.ClipRect.Corner11, // upper right
-                    farRight.ClipRect.Corner10  // lower right
+                    new Vector3(leftX, bottomY, z), // lower left
+                    new Vector3(leftX, topY, z), // upper left
+                    new Vector3(rightX, topY, z), // upper right
+                    new Vector3(rightX, bottomY, z) // lower right
                     );
 
-                Debug.Log("Far Left C00 = " + farLeft.ClipRect.Corner00);
-                Debug.Log("Far Left C01 = " + farLeft.ClipRect.Corner01);
-                Debug.Log("Far Right C11 = " + farRight.ClipRect.Corner11);
-                Debug.Log("Far Right C10 = " + farRight.ClipRect.Corner10);
+                //int farRightIndex = sortedClipPlanes.Length - 1;
+                //int farLeftIndex = 0;
+                //ClipPlaneManager farLeft = sortedClipPlanes[farLeftIndex];
+                //ClipPlaneManager farRight = sortedClipPlanes[farRightIndex];
+                //PlaneRect newPlane = new PlaneRect(
+                //    farLeft.ClipRect.Corner00, // lower left
+                //    farLeft.ClipRect.Corner01, // upper left
+                //    farRight.ClipRect.Corner11, // upper right
+                //    farRight.ClipRect.Corner10  // lower right
+                //    );
+
+                //Debug.Log("Far Left C00 = " + farLeft.ClipRect.Corner00);
+                //Debug.Log("Far Left C01 = " + farLeft.ClipRect.Corner01);
+                //Debug.Log("Far Right C11 = " + farRight.ClipRect.Corner11);
+                //Debug.Log("Far Right C10 = " + farRight.ClipRect.Corner10);
+
+                Debug.Log("New Plane Corner00 = " + newPlane.Corner00);
+                Debug.Log("New Plane Corner01 = " + newPlane.Corner01);
+                Debug.Log("New Plane Corner11 = " + newPlane.Corner11);
+                Debug.Log("New Plane Corner10 = " + newPlane.Corner10);
 
                 // Generate a slightly shrunken plane for our purposes
                 PlaneRect shrunkenPlane = ShrinkPlaneRect(newPlane, PlaneShrinkFactor);
@@ -268,14 +339,14 @@ namespace InterpolatedCamera
             // Make the new plane
             PlaneRect newPlane = new PlaneRect(newLL, newUL, newUR, newLR);
 
-            //Debug.Log("Shrunken plane LL = " + newLL);
-            //Debug.Log("Original plane LL = " + plane.Corner00);
-            //Debug.Log("Shrunken plane UL = " + newUL);
-            //Debug.Log("Original plane UL = " + plane.Corner01);
-            //Debug.Log("Shrunken plane UR = " + newUR);
-            //Debug.Log("Original plane UR = " + plane.Corner11);
-            //Debug.Log("Shrunken plane LR = " + newLR);
-            //Debug.Log("Original plane LR = " + plane.Corner10);
+            Debug.Log("Shrunken plane LL = " + newLL);
+            Debug.Log("Original plane LL = " + plane.Corner00);
+            Debug.Log("Shrunken plane UL = " + newUL);
+            Debug.Log("Original plane UL = " + plane.Corner01);
+            Debug.Log("Shrunken plane UR = " + newUR);
+            Debug.Log("Original plane UR = " + plane.Corner11);
+            Debug.Log("Shrunken plane LR = " + newLR);
+            Debug.Log("Original plane LR = " + plane.Corner10);
 
             return newPlane;
         }

@@ -54,7 +54,8 @@ namespace InterpolatedCamera
             representativeCam.transform.up = cam.transform.up;
             representativeCam.transform.right = cam.transform.right;
 
-            representativePlane = new ClipPlaneManager(cam);
+            //representativePlane = new ClipPlaneManager(cam);
+            representativePlane = new ClipPlaneManager(representativeCam);
 
             GameObject.Destroy(tempCam);
         }
@@ -84,7 +85,9 @@ namespace InterpolatedCamera
             Ray ray = new Ray(origin, dir);
             RaycastHit rh = representativePlane.Intersect(ray, origin);
 
-            return UV(representativePlane.ClipRect, rh.point);
+            ClipPlaneManager clipPlane = gameObject.GetComponent<ClipPlaneManager>();
+
+            return UV(clipPlane.ClipRect, rh.point);
         }
 
         ///// <summary>

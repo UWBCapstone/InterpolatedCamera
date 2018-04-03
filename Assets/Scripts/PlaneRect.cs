@@ -20,19 +20,18 @@ namespace InterpolatedCamera
             p11 = new Vector3(1, 1);
         }
 
-        public PlaneRect(Vector3 LowerLeft, Vector3 UpperLeft, Vector3 UpperRight, Vector3 LowerRight)
+        public PlaneRect(Vector3 LowerLeft, Vector3 UpperLeft, Vector3 UpperRight, Vector3 LowerRight) : this()
         {
             p00 = LowerLeft;
             p10 = LowerRight;
             p11 = UpperRight;
             p01 = UpperLeft;
         }
-
-        // Makes a square
-        public PlaneRect(Vector3 min, Vector3 max, Vector3 normal, bool isSquare)
+        
+        public PlaneRect(Vector3 min, Vector3 max, Vector3 normal, bool isSquare) : this()
         {
-            p00 = min;
-            p11 = max;
+            p00 = new Vector3(min.x, min.y, min.z);
+            p11 = new Vector3(max.x, max.y, max.z);
             Vector3 cent = p00 + ((p11 - p00) / 2);
             if ((p11 - p00).normalized == normal.normalized
                 || (p00 - p11).normalized == normal.normalized)
@@ -59,12 +58,12 @@ namespace InterpolatedCamera
                 {
                     // Assumes it's a vertical rectangle that is horizontally level
                     Vector3 left = cent + Vector3.left;
-                    float dotL = Vector3.Dot(p00 - cent, left);
+                    float dotL = Vector3.Dot(p00 - cent, left - cent);
                     left = cent + Vector3.left * dotL;
                     p01 = p00 + (left - p00) * 2;
 
                     Vector3 right = cent + Vector3.right;
-                    float dotR = Vector3.Dot(p11 - cent, right);
+                    float dotR = Vector3.Dot(p11 - cent, right - cent);
                     right = cent + Vector3.right * dotR;
                     p10 = p11 + (right - p11) * 2;
                 }

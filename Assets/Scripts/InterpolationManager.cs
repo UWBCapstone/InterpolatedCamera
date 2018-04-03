@@ -66,7 +66,8 @@ namespace InterpolatedCamera
             GameObject viewingCam = viewingCamManager.ViewingCameras[camIndex];
             UVCalc uvCalc = viewingCam.GetComponent<UVCalc>();
             ClipPlaneManager viewingCamClipPlane = viewingCamManager.ClipPlanes[camIndex];
-            Vector3 origin = MainCamera.transform.position;
+            //Vector3 origin = MainCamera.transform.position;
+            Vector3 origin = viewingCam.transform.position;
 
             // Calculate the UV values of the aggregate plane in terms of the 
             // UV for the clip plane of the given viewing camera clip plane. 

@@ -11,18 +11,42 @@ namespace InterpolatedCamera
             PlaneRect xRect = x.clipPlane;
             PlaneRect yRect = y.clipPlane;
 
-            if(xRect.center.x > yRect.center.x)
+            if(xRect.Corner00.x < yRect.Corner00.x)
             {
-                return 1;
+                return -1;
             }
-            else if(xRect.center.x < yRect.center.x)
+            else if(xRect.Corner00.x == yRect.Corner00.x)
             {
-                return 1;
+                if(xRect.center.x < yRect.Corner00.x)
+                {
+                    return -1;
+                }
+                else if(xRect.center.x == yRect.Corner00.x)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
             }
             else
             {
-                return 0;
+                return 1;
             }
+
+            //if(xRect.center.x > yRect.center.x)
+            //{
+            //    return 1;
+            //}
+            //else if(xRect.center.x < yRect.center.x)
+            //{
+            //    return 1;
+            //}
+            //else
+            //{
+            //    return 0;
+            //}
         }
 
         public static IComparer<ClipPlaneManager> SortByX()

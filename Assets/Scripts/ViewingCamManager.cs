@@ -36,10 +36,23 @@ namespace InterpolatedCamera
                 associateClipPlane(i);
 
                 // ERROR TESTING - OFFSETTING THE CAMERA STARTING POSITION MESSES UP THE PLANERECT HORRENDOUSLY - WHY?
-                //ViewingCameras[i].transform.position = CamStartingPositions[i];
-                ////ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
+                ViewingCameras[i].transform.position = CamStartingPositions[i];
+                ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
                 //ClipPlanes[i].transform.position = CamStartingPositions[i];
+                
+                Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[i].clipPlane.Corner00);
+                Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[i].clipPlane.Corner01);
+                Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[i].clipPlane.Corner11);
+                Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[i].clipPlane.Corner10);
             }
+        }
+
+        public void DEBUGASSIST()
+        {
+            Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[0].clipPlane.Corner00);
+            Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[0].clipPlane.Corner01);
+            Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[0].clipPlane.Corner11);
+            Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[0].clipPlane.Corner10);
         }
 
         public GameObject GenerateViewingCamera(int camIndex)
@@ -74,6 +87,8 @@ namespace InterpolatedCamera
                 viewingCam.name = "ViewingCamera_" + "(" + camIndex.ToString() + ")";
             }
 
+            cam.depth = -2;
+
             return viewingCam;
         }
 
@@ -95,7 +110,7 @@ namespace InterpolatedCamera
             ClipPlaneManager clipPlane = ViewingCameras[camIndex].AddComponent<ClipPlaneManager>();
             ClipPlanes[camIndex] = clipPlane;
             UpdateViewingCameraClipPlane(camIndex);
-
+            
             // Add miscellaneous scripts
             GameObject viewingCam = ViewingCameras[camIndex];
             UVCalc uvCalc = viewingCam.AddComponent<UVCalc>();
