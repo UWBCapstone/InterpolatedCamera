@@ -15,20 +15,21 @@ namespace InterpolatedCamera
         public PlaneRect()
         {
             p00 = Vector3.zero;
-            p01 = new Vector3(1, 0);
-            p10 = new Vector3(0, 1);
+            p01 = new Vector3(0, 1);
+            p10 = new Vector3(1, 0);
             p11 = new Vector3(1, 1);
         }
 
         public PlaneRect(Vector3 LowerLeft, Vector3 UpperLeft, Vector3 UpperRight, Vector3 LowerRight)
         {
             p00 = LowerLeft;
-            p10 = UpperLeft;
+            p10 = LowerRight;
             p11 = UpperRight;
-            p01 = LowerRight;
+            p01 = UpperLeft;
         }
 
-        public PlaneRect(Vector3 min, Vector3 max, Vector3 normal)
+        // Makes a square
+        public PlaneRect(Vector3 min, Vector3 max, Vector3 normal, bool isSquare)
         {
             p00 = min;
             p11 = max;
@@ -44,13 +45,29 @@ namespace InterpolatedCamera
             }
             else
             {
-                Vector3 dir = Vector3.Cross(p11 - p00, normal);
-                //Debug.Log("Direction vector to p01 and p10 is " + dir);
-                Vector3 dis = ((p11 - p00) / 2).magnitude * dir.normalized;
-                //Debug.Log("Distance magnitude is " + ((p11 - p00) / 2).magnitude * dir.normalized);
-                //Debug.Log("Distance is " + dis);
-                p10 = cent - dis;
-                p01 = cent + dis;
+                if (isSquare)
+                {
+                    Vector3 dir = Vector3.Cross(p11 - p00, normal);
+                    //Debug.Log("Direction vector to p01 and p10 is " + dir);
+                    Vector3 dis = ((p11 - p00) / 2).magnitude * dir.normalized;
+                    //Debug.Log("Distance magnitude is " + ((p11 - p00) / 2).magnitude * dir.normalized);
+                    //Debug.Log("Distance is " + dis);
+                    p10 = cent - dis;
+                    p01 = cent + dis;
+                }
+                else
+                {
+                    // Assumes it's a vertical rectangle that is horizontally level
+                    Vector3 left = cent + Vector3.left;
+                    float dotL = Vector3.Dot(p00 - cent, left);
+                    left = cent + Vector3.left * dotL;
+                    p01 = p00 + (left - p00) * 2;
+
+                    Vector3 right = cent + Vector3.right;
+                    float dotR = Vector3.Dot(p11 - cent, right);
+                    right = cent + Vector3.right * dotR;
+                    p10 = p11 + (right - p11) * 2;
+                }
             }
         }
         #endregion

@@ -10,18 +10,27 @@ namespace InterpolatedCamera
     public class InterpolationManager : MonoBehaviour
     {
         public ViewingCamManager viewingCamManager;
-        public Texture2DArray textureArray; // array of the images from the webcams / viewing cameras
+        //public Texture2DArray textureArray; // array of the images from the webcams / viewing cameras
+        public Texture2D[] textureArray;
         public const int maxCameras = 8; // Hard coded in shader due to texture array usage
         public GameObject MainCamera;
         public GameObject aggregateClipPlane;
+
+        public void Start()
+        {
+            //AssignToAggregateClipPlaneShader();
+            Invoke("AssignToAggregateClipPlaneShader", 2.0f);
+        }
 
         public void AssignToAggregateClipPlaneShader()
         {
             AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
             Vector2[][] uvArray = GenerateUVArray();
             canvas.SetUVArray(uvArray);
-            Texture2DArray texArray = GenerateTextureArray();
-            canvas.SetTextureArray(texArray);
+            //Texture2DArray texArray = GenerateTextureArray();
+            Texture2D[] texArray = GenerateTextureArray();
+            canvas.SetTextures(texArray);
+            textureArray = texArray;
         }
         
         public Vector2[][] GenerateUVArray()
@@ -76,6 +85,12 @@ namespace InterpolatedCamera
             UVs[2] = UR;
             UVs[3] = LR;
 
+            // update values shown on uvCalc script of viewing camera
+            uvCalc.LowerLeft = LL;
+            uvCalc.UpperLeft = UL;
+            uvCalc.UpperRight = UR;
+            uvCalc.LowerRight = LR;
+
             return UVs;
         }
 
@@ -101,10 +116,9 @@ namespace InterpolatedCamera
             return blankUVs;
         }
 
-        public Texture2DArray GenerateTextureArray()
+        public Texture2D[] GenerateTextureArray()
         {
-            textureArray = new Texture2DArray(1920, 1080, maxCameras, TextureFormat.RGBA32, false);
-            textureArray.wrapMode = TextureWrapMode.Clamp;
+            Texture2D[] texArray = new Texture2D[maxCameras];
 
             int stop1 = (maxCameras > viewingCamManager.ViewingCameras.Length)
                 ? viewingCamManager.ViewingCameras.Length
@@ -116,20 +130,93 @@ namespace InterpolatedCamera
             // Copy webcam textures into Texture2DArray
             for (int i = 0; i < stop1; i++)
             {
-                GameObject viewingCam = viewingCamManager.ViewingCameras[i];
-                WebCamTexture tex = viewingCam.GetComponent<WebCamIdentifier>().WebCamFeed;
-                Graphics.CopyTexture(tex, 0, 0, textureArray, i, 0);
+                Texture2D tex = GenerateTexture(i);
+                texArray[i] = tex;
             }
             if (stop2 > viewingCamManager.ViewingCameras.Length)
             {
-                // Fill remaining array spaces with black images with offset UV associations
-                for(int i = stop1; i < stop2; i++)
+                for (int i = stop1; i < stop2; i++)
                 {
-                    Graphics.CopyTexture(Texture2D.blackTexture, 0, 0, textureArray, i, 0);
+                    Texture2D blackTex = GenerateBlackTexture();
+                    texArray[i] = blackTex;
                 }
             }
 
-            return textureArray;
+            return texArray;
+        }
+
+        public Texture2D GenerateTexture(int camIndex)
+        {
+            GameObject viewingCam = viewingCamManager.ViewingCameras[camIndex];
+            WebcamDeviceNames deviceName = viewingCam.GetComponent<WebCamIdentifier>().DeviceName;
+            WebCamSpecs specs = WebCamSpecsManager.GetSpecs(deviceName);
+            WebCamTexture webFeed = viewingCam.GetComponent<WebCamIdentifier>().WebCamFeed;
+
+            int width = specs.HorizontalResolution;
+            int height = specs.VerticalResolution;
+
+            // https://forum.unity.com/threads/webcamtexture-texture2d.154057/
+            // Tie the texture to the webcam feed texture associated with a viewing camera
+            Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+
+            ////var ptr = webFeed.GetNativeTexturePtr();
+            ////Debug.Log(ptr);
+            ////Texture2D exTex = Texture2D.CreateExternalTexture(width, height, TextureFormat.RGBA32, false, false, ptr);
+            ////Debug.Log("Created external texture");
+            //tex.UpdateExternalTexture(webFeed.GetNativeTexturePtr());
+            //tex.Apply();
+            Graphics.CopyTexture(webFeed, tex);
+            tex.name = webFeed.name;
+
+            return tex;
+        }
+
+        //public Texture2DArray GenerateTextureArray()
+        //{
+        //    textureArray = new Texture2DArray(1920, 1080, maxCameras, TextureFormat.RGBA32, false);
+        //    textureArray.name = "WebCamFeedTextureArray";
+        //    textureArray.wrapMode = TextureWrapMode.Clamp;
+
+        //    int stop1 = (maxCameras > viewingCamManager.ViewingCameras.Length)
+        //        ? viewingCamManager.ViewingCameras.Length
+        //        : maxCameras;
+        //    int stop2 = (maxCameras > viewingCamManager.ViewingCameras.Length)
+        //        ? maxCameras
+        //        : viewingCamManager.ViewingCameras.Length;
+
+        //    // Copy webcam textures into Texture2DArray
+        //    for (int i = 0; i < stop1; i++)
+        //    {
+        //        GameObject viewingCam = viewingCamManager.ViewingCameras[i];
+        //        WebCamTexture tex = viewingCam.GetComponent<WebCamIdentifier>().WebCamFeed;
+        //        //Graphics.CopyTexture(tex, 0, 0, textureArray, i, 0);
+        //        textureArray.
+        //        tex.GetNativeTexturePtr()
+        //        mytex.UpdateExternalTexture()
+        //    }
+        //    if (stop2 > viewingCamManager.ViewingCameras.Length)
+        //    {
+        //        Texture2D blackTex = GenerateBlackTexture();
+
+        //        // Fill remaining array spaces with black images with offset UV associations
+        //        for(int i = stop1; i < stop2; i++)
+        //        {
+        //            Graphics.CopyTexture(blackTex, 0, 0, textureArray, i, 0);
+        //        }
+        //    }
+
+        //    return textureArray;
+        //}
+
+        private Texture2D GenerateBlackTexture()
+        {
+            Texture2D BlackTex = new Texture2D(1920, 1080);
+            Color[] colors = new Color[BlackTex.width * BlackTex.height];
+            BlackTex.SetPixels(colors);
+            BlackTex.Apply();
+            BlackTex.name = "BlankTex";
+
+            return BlackTex;
         }
     }
 }

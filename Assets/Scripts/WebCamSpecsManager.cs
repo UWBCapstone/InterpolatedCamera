@@ -7,7 +7,8 @@ namespace InterpolatedCamera
     public enum WebcamDeviceNames
     {
         NULL,
-        LOGITECH_C920
+        LOGITECH_C920,
+        ADESSO_CYBERTRACK_V10
     };
 
     public struct WebCamSpecs
@@ -18,6 +19,8 @@ namespace InterpolatedCamera
         public float FarClippingPlane;
         public WebcamDeviceNames WebcamDeviceName;
         public string DeviceName;
+        public int HorizontalResolution;
+        public int VerticalResolution;
 
         public WebCamSpecs(
             float horizontalFOV, 
@@ -25,7 +28,9 @@ namespace InterpolatedCamera
             float nearClippingPlane, 
             float farClippingPlane, 
             WebcamDeviceNames webcamDeviceName,
-            string deviceName
+            string deviceName,
+            int horizontalResolution,
+            int verticalResolution
             )
         {
             HorizontalFOV = horizontalFOV;
@@ -34,6 +39,8 @@ namespace InterpolatedCamera
             FarClippingPlane = farClippingPlane;
             WebcamDeviceName = webcamDeviceName;
             DeviceName = deviceName;
+            HorizontalResolution = horizontalResolution;
+            VerticalResolution = verticalResolution;
         }
     }
     
@@ -54,6 +61,8 @@ namespace InterpolatedCamera
             float FarClippingPlane;
             WebcamDeviceNames WebcamDeviceName;
             string DeviceName;
+            int HorizontalResolution;
+            int VerticalResolution;
 
             switch (deviceName)
             {
@@ -65,6 +74,8 @@ namespace InterpolatedCamera
                     FarClippingPlane = 1000;
                     WebcamDeviceName = WebcamDeviceNames.LOGITECH_C920;
                     DeviceName = WebcamDeviceName.ToString();
+                    HorizontalResolution = 640;
+                    VerticalResolution = 480;
 
                     camSpecs = new WebCamSpecs(
                         HorizontalFOV,
@@ -72,7 +83,30 @@ namespace InterpolatedCamera
                         NearClippingPlane,
                         FarClippingPlane,
                         WebcamDeviceName,
-                        DeviceName);
+                        DeviceName,
+                        HorizontalResolution,
+                        VerticalResolution);
+
+                    break;
+                case WebcamDeviceNames.ADESSO_CYBERTRACK_V10:
+                    HorizontalFOV = 25.0f;
+                    VerticalFOV = 25.0f;
+                    NearClippingPlane = 0.3f;
+                    FarClippingPlane = 1000f;
+                    WebcamDeviceName = WebcamDeviceNames.ADESSO_CYBERTRACK_V10;
+                    DeviceName = WebcamDeviceName.ToString();
+                    HorizontalResolution = 320;
+                    VerticalResolution = 240;
+
+                    camSpecs = new WebCamSpecs(
+                        HorizontalFOV,
+                        VerticalFOV,
+                        NearClippingPlane,
+                        FarClippingPlane,
+                        WebcamDeviceName,
+                        DeviceName,
+                        HorizontalResolution,
+                        VerticalResolution);
 
                     break;
                 default:
@@ -88,9 +122,14 @@ namespace InterpolatedCamera
         {
             string deviceName = webcam.name;
 
-            if (deviceName.ToLower().Contains("LogitechC920".ToLower()))
+            if (deviceName.ToLower().Contains("HD Pro Webcam C920".ToLower()))
             {
                 return WebcamDeviceNames.LOGITECH_C920;
+            }
+            else if (deviceName.ToLower().Contains("Adesso".ToLower())
+                || deviceName.ToLower().Contains("USB2.0".ToLower()))
+            {
+                return WebcamDeviceNames.ADESSO_CYBERTRACK_V10;
             }
             else
             {

@@ -22,8 +22,6 @@ namespace InterpolatedCamera
         public Vector2 UpperRight;
 
         // public GameObject MainCamera;
-        public GameObject ViewingCamera;
-        public GameObject RenderTextureCamera;
         //public List<GameObject> CloakingBoxes;
 
         private ClipPlaneManager representativePlane;
@@ -35,7 +33,7 @@ namespace InterpolatedCamera
             UpperLeft = Vector2.zero;
             UpperRight = Vector2.zero;
 
-            representativePlane = new ClipPlaneManager(new Camera());
+            representativePlane = new ClipPlaneManager();
         }
 
         public void Update()
@@ -45,7 +43,9 @@ namespace InterpolatedCamera
 
         public void SetRepresentativePlane(Camera cam)
         {
-            Camera representativeCam = new Camera();
+            GameObject tempCam = new GameObject();
+            tempCam.SetActive(false);
+            Camera representativeCam = tempCam.AddComponent<Camera>();
             representativeCam.fieldOfView = 175.0f;
             representativeCam.farClipPlane = cam.farClipPlane;
             representativeCam.nearClipPlane = cam.nearClipPlane;
@@ -55,6 +55,8 @@ namespace InterpolatedCamera
             representativeCam.transform.right = cam.transform.right;
 
             representativePlane = new ClipPlaneManager(cam);
+
+            GameObject.Destroy(tempCam);
         }
 
         public static Vector2 UV(PlaneRect canvas, Vector3 pointOnCanvas)

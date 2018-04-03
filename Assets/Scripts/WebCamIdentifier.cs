@@ -6,10 +6,11 @@ namespace InterpolatedCamera
 {
     public class WebCamIdentifier : MonoBehaviour
     {
-        public string DeviceName;
+        public string DeviceNameString;
         public WebCamDevice WebCam;
         public WebCamTexture WebCamFeed;
         public WebCamManager webCamManager;
+        public WebcamDeviceNames DeviceName;
         private int camIndex;
 
         /// <summary>
@@ -24,9 +25,10 @@ namespace InterpolatedCamera
             {
                 webCamManager = managerInstance;
                 this.camIndex = camIndex;
-                DeviceName = managerInstance.WebCams[camIndex].name;
+                DeviceNameString = managerInstance.WebCams[camIndex].name;
                 WebCam = managerInstance.WebCams[camIndex];
                 WebCamFeed = managerInstance.VideoFeeds[camIndex];
+                DeviceName = WebCamSpecsManager.WebCamDeviceToSpecsName(WebCam);
             }
         }
 

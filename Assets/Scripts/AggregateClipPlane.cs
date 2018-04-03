@@ -13,41 +13,84 @@ namespace InterpolatedCamera
         public float FarClipDistance = 1000.0f;
         public Vector2[][] UVArray;
         private Vector4[][] ShaderUVArray;
-        public Texture2DArray TextureArray;
+        //public Texture2DArray TextureArray;
+        public Texture2D[] TextureArray;
+        public float PlaneShrinkFactor = 0.0f;
+        public List<Vector2> UVList;
+
+        private bool initialized = false;
 
         // Use this for initialization
         void Start()
         {
-            GameObject go = GenerateAggregateClipPlaneObject(viewingCamManager.ClipPlanes);
-            go.transform.parent = gameObject.transform;
-            InvokeRepeating("RefreshShaderInfo", 2.0f, 2.0f);
+        }
+
+        private void FixedUpdate()
+        {
+            if (!initialized)
+            {
+                GameObject go = GenerateAggregateClipPlaneObject(viewingCamManager.ClipPlanes);
+                go.transform.parent = gameObject.transform;
+                //InvokeRepeating("RefreshShaderInfo", 2.0f, 2.0f);
+                Invoke("RefreshShaderInfo", 2.0f);
+            }
         }
 
         // Update is called once per frame
         void Update()
         {
-
+            //print(gameObject.transform.GetChild(0).gameObject.GetComponent<MeshRenderer>().material.GetVector("_UV0"));
         }
 
         public void SetUVArray(Vector2[][] uvArray)
         {
             UVArray = uvArray;
             ShaderUVArray = ConvertUVValuesForShader(UVArray);
+
+            UVList = new List<Vector2>();
+            for(int i = 0; i < UVArray.Length; i++)
+            {
+                for(int j = 0; j < 4; j++)
+                {
+                    UVList.Add(UVArray[i][j]);
+                }
+            }
+
+            //// Debugging
+            //Vector4 left = Vector4.Lerp(ShaderUVArray[0][0], ShaderUVArray[0][1], 0.25f);
+            //Vector4 right = Vector4.Lerp(ShaderUVArray[0][3], ShaderUVArray[0][2], 0.25f);
+            //Vector4 bottom = Vector4.Lerp(ShaderUVArray[0][0], ShaderUVArray[0][3], 0.25f);
+            //Vector4 top = Vector4.Lerp(ShaderUVArray[0][1], ShaderUVArray[0][2], 0.25f);
+
+            //Debug.Log("Left lerp = " + left);
+            //Debug.Log("Right lerp = " + right);
+            //Debug.Log("Bottom lerp = " + bottom);
+            //Debug.Log("Top lerp = " + top);
         }
 
-        public void SetTextureArray(Texture2DArray texArray)
+        //public void SetTextureArray(Texture2DArray texArray)
+        //{
+        //    TextureArray = texArray;
+        //}
+
+        public void SetTextures(Texture2D[] texArray)
         {
             TextureArray = texArray;
         }
 
         public void RefreshShaderInfo()
         {
-            var mr = gameObject.GetComponent<MeshRenderer>();
+            GameObject planeObj = gameObject.transform.GetChild(0).gameObject;
+            var mr = planeObj.GetComponent<MeshRenderer>();
             if (mr != null)
             {
-                mr.material.SetTexture("_MainTex", TextureArray);
+                for(int i = 0; i < TextureArray.Length; i++)
+                {
+                    mr.material.SetTexture("_Tex" + i.ToString(), TextureArray[i]);
+                }
+                //mr.material.SetTexture("_MainTex", TextureArray);
 
-                for (int i = 0; i < UVArray.Length; i++)
+                for (int i = 0; i < ShaderUVArray.Length; i++)
                 {
                     mr.material.SetVectorArray("_UV" + i.ToString(), ShaderUVArray[i]);
                 }
@@ -102,7 +145,8 @@ namespace InterpolatedCamera
             // Generate the plane rectangle
             Vector3 pos;
             Vector3 forward;
-            PlaneRect planeRect = GenerateAggregatePlaneRect(clipPlanes, out pos, out forward);
+            //PlaneRect planeRect = GenerateAggregatePlaneRect(clipPlanes, out pos, out forward);
+            PlaneRect planeRect = GenerateAggregatePlaneRect(clipPlanes);
             
             // Generate the mesh and object for the plane
             Mesh planeMesh = GeneratePlaneMesh(planeRect);
@@ -122,14 +166,42 @@ namespace InterpolatedCamera
             // of the other clip plane cameras to the clip planes. 
             // The forward for this object has to be from the plane to 
             // the "camera" it is associated with))
-            aggregateClipPlane.transform.forward = -forward;
-            aggregateClipPlane.transform.position = pos + forward.normalized * FarClipDistance;
+            //aggregateClipPlane.transform.forward = -forward;
+            //aggregateClipPlane.transform.position = pos + forward.normalized * FarClipDistance;
+            aggregateClipPlane.transform.position += -aggregateClipPlane.transform.forward.normalized * 3.0f; // -forward.normalized * 3.0f
+
+            //Debug.Log("Aggregate calculated pos = " + aggregateClipPlane.transform.position);
+
+            // set initialization flag appropriately
+            if (planeRect != null
+                && planeMesh != null
+                && planeMat != null)
+            {
+                Debug.Log("Aggregate Clip Plane initialized");
+                initialized = true;
+            }
+            else
+            {
+                GameObject.Destroy(aggregateClipPlane);
+            }
 
             return aggregateClipPlane;
         }
 
-        public PlaneRect GenerateAggregatePlaneRect(ClipPlaneManager[] clipPlanes, out Vector3 pos, out Vector3 forward)
+        public PlaneRect GenerateAggregatePlaneRect(ClipPlaneManager[] clipPlanes)//, out Vector3 pos, out Vector3 forward)
         {
+            // Adjust all clipPlanes and viewing cameras to be in their starting position
+            // ERROR TESTING
+            // This is a bit of a hack to circumvent an issue encountered in ViewingCamManager in InitViewingCameras
+            for(int i = 0; i < viewingCamManager.ViewingCameras.Length; i++)
+            {
+                GameObject viewingCam = viewingCamManager.ViewingCameras[i];
+                ClipPlaneManager clipPlane = viewingCam.GetComponent<ClipPlaneManager>();
+                // ERROR TESTING - this fix doesn't work either...
+                //viewingCam.transform.Translate(viewingCamManager.CamStartingPositions[i]);
+                //clipPlane.transform.Translate(viewingCamManager.CamStartingPositions[i]);
+            }
+
             if (clipPlanes != null
                 && clipPlanes.Length > 0)
             {
@@ -149,22 +221,26 @@ namespace InterpolatedCamera
                     farRight.ClipRect.Corner10  // lower right
                     );
 
-                // Generate a slightly shrunken plane for our purposes
-                float planeShrinkFactor = 0.15f;
-                PlaneRect shrunkenPlane = ShrinkPlaneRect(newPlane, planeShrinkFactor);
+                Debug.Log("Far Left C00 = " + farLeft.ClipRect.Corner00);
+                Debug.Log("Far Left C01 = " + farLeft.ClipRect.Corner01);
+                Debug.Log("Far Right C11 = " + farRight.ClipRect.Corner11);
+                Debug.Log("Far Right C10 = " + farRight.ClipRect.Corner10);
 
-                // Form anchor for new plane (as if the image was projected from 
-                // a camera at this point)
-                pos = farLeft.pos + ((farRight.pos - farLeft.pos) / 2.0f);
-                // ERROR TESTING - THIS NEEDS TO BE ADJUSTED TO ACCOUNT FOR STATES WHERE THE FORWARD DIRECTIONS ARE NOT THE SAME.
-                forward = farLeft.forward;
+                // Generate a slightly shrunken plane for our purposes
+                PlaneRect shrunkenPlane = ShrinkPlaneRect(newPlane, PlaneShrinkFactor);
+
+                //// Form anchor for new plane (as if the image was projected from 
+                //// a camera at this point)
+                //pos = farLeft.pos + ((farRight.pos - farLeft.pos) / 2.0f);
+                //// ERROR TESTING - THIS NEEDS TO BE ADJUSTED TO ACCOUNT FOR STATES WHERE THE FORWARD DIRECTIONS ARE NOT THE SAME.
+                //forward = farLeft.forward;
 
                 return shrunkenPlane;
             }
             else
             {
-                pos = Vector3.zero;
-                forward = new Vector3(0, 0, 1);
+                //pos = Vector3.zero;
+                //forward = new Vector3(0, 0, 1);
                 return null;
             }
         }
@@ -178,19 +254,28 @@ namespace InterpolatedCamera
         public PlaneRect ShrinkPlaneRect(PlaneRect plane, float shrinkFactor)
         {
             // Generate diagonal vectors for shrinking points
-            Vector3 ULtoLR = plane.Corner01 - plane.Corner10;
+            Vector3 ULtoLR = plane.Corner10 - plane.Corner01;
             Vector3 LRtoUL = -ULtoLR;
             Vector3 LLtoUR = plane.Corner11 - plane.Corner00;
             Vector3 URtoLL = -LLtoUR;
 
             // Adjust the points that will make the new plane
             Vector3 newLL = plane.Corner00 + LLtoUR * shrinkFactor;
-            Vector3 newUL = plane.Corner10 + ULtoLR * shrinkFactor;
+            Vector3 newUL = plane.Corner01 + ULtoLR * shrinkFactor;
             Vector3 newUR = plane.Corner11 + URtoLL * shrinkFactor;
             Vector3 newLR = plane.Corner10 + LRtoUL * shrinkFactor;
 
             // Make the new plane
             PlaneRect newPlane = new PlaneRect(newLL, newUL, newUR, newLR);
+
+            //Debug.Log("Shrunken plane LL = " + newLL);
+            //Debug.Log("Original plane LL = " + plane.Corner00);
+            //Debug.Log("Shrunken plane UL = " + newUL);
+            //Debug.Log("Original plane UL = " + plane.Corner01);
+            //Debug.Log("Shrunken plane UR = " + newUR);
+            //Debug.Log("Original plane UR = " + plane.Corner11);
+            //Debug.Log("Shrunken plane LR = " + newLR);
+            //Debug.Log("Original plane LR = " + plane.Corner10);
 
             return newPlane;
         }
@@ -208,6 +293,11 @@ namespace InterpolatedCamera
                 meshVertices.Add(plane.Corner11); // upper right
                 meshVertices.Add(plane.Corner10); // lower right
 
+                Debug.Log("Plane corner 00 = " + plane.Corner00);
+                Debug.Log("Plane corner 01 = " + plane.Corner01);
+                Debug.Log("Plane corner 11 = " + plane.Corner11);
+                Debug.Log("Plane corner 10 = " + plane.Corner10);
+
                 // Set mesh triangles
                 int[] meshTriangles = new int[6];
                 meshTriangles[0] = 0;
@@ -219,6 +309,18 @@ namespace InterpolatedCamera
 
                 planeMesh.SetVertices(meshVertices);
                 planeMesh.SetTriangles(meshTriangles, 0);
+
+                // Set the uv values
+                List<Vector2> uvs = new List<Vector2>();
+                uvs.Add(new Vector2(0, 0));
+                uvs.Add(new Vector2(0, 1));
+                uvs.Add(new Vector2(1, 1));
+                uvs.Add(new Vector2(1, 0));
+                //planeMesh.uv = uvs.ToArray();
+                planeMesh.SetUVs(0, uvs);
+                planeMesh.SetUVs(1, uvs);
+
+                planeMesh.name = "PlaneMesh";
 
                 return planeMesh;
             }
@@ -232,9 +334,11 @@ namespace InterpolatedCamera
         public Material GeneratePlaneMaterial()
         {
             Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedCameraShader"));
+            //Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedShader2"));
+            aggregatePlaneMaterial.name = "PlaneMat";
 
             // Set initial texture array values
-            
+
             return aggregatePlaneMaterial;
         }
     }

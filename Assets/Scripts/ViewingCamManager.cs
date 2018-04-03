@@ -9,6 +9,7 @@ namespace InterpolatedCamera
         public WebCamManager webCamManager;
         public GameObject[] ViewingCameras;
         public ClipPlaneManager[] ClipPlanes;
+        public Vector3[] CamStartingPositions = new Vector3[8]; // InterpolationManager.maxCameras
         
         public void Update()
         {
@@ -33,8 +34,12 @@ namespace InterpolatedCamera
             {
                 ViewingCameras[i] = GenerateViewingCamera(i);
                 associateClipPlane(i);
-            }
 
+                // ERROR TESTING - OFFSETTING THE CAMERA STARTING POSITION MESSES UP THE PLANERECT HORRENDOUSLY - WHY?
+                //ViewingCameras[i].transform.position = CamStartingPositions[i];
+                ////ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
+                //ClipPlanes[i].transform.position = CamStartingPositions[i];
+            }
         }
 
         public GameObject GenerateViewingCamera(int camIndex)
@@ -88,6 +93,7 @@ namespace InterpolatedCamera
         private void associateClipPlane(int camIndex)
         {
             ClipPlaneManager clipPlane = ViewingCameras[camIndex].AddComponent<ClipPlaneManager>();
+            ClipPlanes[camIndex] = clipPlane;
             UpdateViewingCameraClipPlane(camIndex);
 
             // Add miscellaneous scripts

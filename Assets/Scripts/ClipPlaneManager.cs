@@ -22,10 +22,15 @@ namespace InterpolatedCamera
         public float hypotenuse;
         public float opposite;
         public float nearClipDis;
-        
+        public float aspect;
+
+        public ClipPlaneManager() { }
+
         // Pass in the render texture camera
         public ClipPlaneManager(Camera cam)
         {
+            //Debug.Log("Cam name = " + cam.name);
+
             pos = cam.transform.position;
             up = cam.transform.up;
             forward = cam.transform.forward;
@@ -36,6 +41,7 @@ namespace InterpolatedCamera
             hypotenuse = dis / Mathf.Cos(Mathf.Deg2Rad * deg);
             opposite = Mathf.Sin(Mathf.Deg2Rad * deg) * hypotenuse;
             nearClipDis = cam.nearClipPlane;
+            aspect = cam.aspect;
 
             //Debug.Log("Right vector is " + right);
             //Debug.Log("Up vector is " + up);
@@ -44,27 +50,28 @@ namespace InterpolatedCamera
             //Debug.Log("Distance is " + dis);
             //Debug.Log("Hypotenuse is " + hypotenuse);
 
-            clipPlane = new PlaneRect(calc00(), calc11(), -forward);
+            clipPlane = new PlaneRect(calc00(), calc11(), -forward, false);
         }
 
         private Vector3 calc00()
         {
-            return pos - right.normalized * opposite - up.normalized * opposite + forward * dis;
+            //return pos - right.normalized * opposite - up.normalized * opposite + forward * dis;
+            return pos - right.normalized * opposite * aspect - up.normalized * opposite + forward * dis;
         }
 
         private Vector3 calc01()
         {
-            return pos - right.normalized * opposite + up.normalized * opposite + forward * dis;
+            return pos - right.normalized * opposite * aspect + up.normalized * opposite + forward * dis;
         }
 
         private Vector3 calc10()
         {
-            return pos + right.normalized * opposite - up.normalized * opposite + forward * dis;
+            return pos + right.normalized * opposite * aspect - up.normalized * opposite + forward * dis;
         }
 
         private Vector3 calc11()
         {
-            return pos + right.normalized * opposite + up.normalized * opposite + forward * dis;
+            return pos + right.normalized * opposite * aspect + up.normalized * opposite + forward * dis;
         }
 
         public RaycastHit Intersect(Ray ray, Vector3 origin)
@@ -84,6 +91,7 @@ namespace InterpolatedCamera
             hypotenuse = dis / Mathf.Cos(Mathf.Deg2Rad * deg);
             opposite = Mathf.Sin(Mathf.Deg2Rad * deg) * hypotenuse;
             nearClipDis = cam.nearClipPlane;
+            aspect = cam.aspect;
 
             //Debug.Log("Right vector is " + right);
             //Debug.Log("Up vector is " + up);
@@ -92,7 +100,7 @@ namespace InterpolatedCamera
             //Debug.Log("Distance is " + dis);
             //Debug.Log("Hypotenuse is " + hypotenuse);
 
-            clipPlane = new PlaneRect(calc00(), calc11(), -forward);
+            clipPlane = new PlaneRect(calc00(), calc11(), -forward, false);
         }
         
         public static List<ClipPlaneManager> SortClipPlanes(ClipPlaneManager[] clipPlanes)
