@@ -15,20 +15,66 @@ namespace InterpolatedCamera
         public const int maxCameras = 8; // Hard coded in shader due to texture array usage
         public GameObject MainCamera;
         public GameObject aggregateClipPlane;
+        public int CamIndexToIgnore = 1;
+        private List<int> CamIndices;
 
         public void Start()
         {
             //AssignToAggregateClipPlaneShader();
             Invoke("AssignToAggregateClipPlaneShader", 2.0f);
+            CamIndices = new List<int>();
+            CamIndices.Add(CamIndexToIgnore);
+        }
+
+        public void Update()
+        {
+            // Update textures
+            AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
+            for(int i = 0; i < viewingCamManager.ViewingCameras.Length; i++)
+            {
+                if (!CamIndices.Contains(i))
+                {
+                    WebCamTexture feed = viewingCamManager.ViewingCameras[i].GetComponent<WebCamIdentifier>().WebCamFeed;
+                    if (textureArray != null
+                        && textureArray.Length > i)
+                    {
+                        Graphics.CopyTexture(feed, textureArray[i]);
+                    }
+                    if (canvas.TextureArray != null
+                        && canvas.TextureArray.Length > i)
+                    {
+                        Graphics.CopyTexture(feed, canvas.TextureArray[i]);
+                    }
+                }
+            }
         }
 
         public void AssignToAggregateClipPlaneShader()
         {
+            //AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
+            //Vector2[][] uvArray = GenerateUVArray();
+            //canvas.SetUVArray(uvArray);
+            ////Texture2DArray texArray = GenerateTextureArray();
+            //Texture2D[] texArray = GenerateTextureArray();
+            //canvas.SetTextures(texArray);
+            //textureArray = texArray;
+
+            AssignToAggregateClipPlaneShader(CamIndices);
+        }
+
+        public void AssignToAggregateClipPlaneShader(List<int> camIndicesToIgnore)
+        {
             AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
             Vector2[][] uvArray = GenerateUVArray();
-            canvas.SetUVArray(uvArray);
-            //Texture2DArray texArray = GenerateTextureArray();
             Texture2D[] texArray = GenerateTextureArray();
+
+            foreach(int index in camIndicesToIgnore)
+            {
+                uvArray[index] = GenerateBlankUV();
+                texArray[index] = GenerateBlackTexture();
+            }
+
+            canvas.SetUVArray(uvArray);
             canvas.SetTextures(texArray);
             textureArray = texArray;
         }
