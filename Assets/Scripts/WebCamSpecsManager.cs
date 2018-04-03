@@ -153,7 +153,7 @@ namespace InterpolatedCamera
             {
                 return WebcamDeviceNames.ADESSO_CYBERTRACK_V10;
             }
-            else if(deviceName.ToLower().Contains("Integrated Webcam"))
+            else if(deviceName.ToLower().Contains("Integrated Webcam".ToLower()))
             {
                 return WebcamDeviceNames.LAPTOP_WEBCAM;
             }

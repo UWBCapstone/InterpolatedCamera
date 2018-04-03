@@ -35,7 +35,6 @@ namespace InterpolatedCamera
         {
             Debug.Log("Viewing cam clip plane corner01 = " + viewingCamManager.ViewingCameras[0].GetComponent<ClipPlaneManager>().ClipRect.Corner01);
             Debug.Log("Clip planes array corner10 = " + viewingCamManager.ClipPlanes[0].clipPlane.Corner10);
-            viewingCamManager.DEBUGASSIST();
 
             GameObject go = GenerateAggregateClipPlaneObject(viewingCamManager.ClipPlanes);
             go.transform.parent = gameObject.transform;
