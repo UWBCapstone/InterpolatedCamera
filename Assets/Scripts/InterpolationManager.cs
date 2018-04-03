@@ -65,9 +65,11 @@ namespace InterpolatedCamera
             Vector2[] UVs = new Vector2[4];
             GameObject viewingCam = viewingCamManager.ViewingCameras[camIndex];
             UVCalc uvCalc = viewingCam.GetComponent<UVCalc>();
-            ClipPlaneManager viewingCamClipPlane = viewingCamManager.ClipPlanes[camIndex];
+            //ClipPlaneManager viewingCamClipPlane = viewingCamManager.ClipPlanes[camIndex];
             //Vector3 origin = MainCamera.transform.position;
             Vector3 origin = viewingCam.transform.position;
+            GameObject interpolatedPlane = aggregateClipPlane.transform.GetChild(0).gameObject;
+            Vector3[] aggregatePlaneVertices = interpolatedPlane.GetComponent<MeshFilter>().mesh.vertices;
 
             // Calculate the UV values of the aggregate plane in terms of the 
             // UV for the clip plane of the given viewing camera clip plane. 
@@ -76,10 +78,14 @@ namespace InterpolatedCamera
             // textures in the texture array to determine easily if a given uv 
             // value for the aggregate plane corresponds to a point on any of 
             // the independent texture planes
-            Vector2 LL = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner00);
-            Vector2 UL = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner01);
-            Vector2 UR = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner11);
-            Vector2 LR = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner10);
+            //Vector2 LL = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner00);
+            //Vector2 UL = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner01);
+            //Vector2 UR = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner11);
+            //Vector2 LR = uvCalc.UVOffCanvas(origin, viewingCamClipPlane.clipPlane.Corner10);
+            Vector2 LL = uvCalc.UVOffCanvas(origin, aggregatePlaneVertices[0]); // lower left
+            Vector2 UL = uvCalc.UVOffCanvas(origin, aggregatePlaneVertices[1]); // upper left
+            Vector2 UR = uvCalc.UVOffCanvas(origin, aggregatePlaneVertices[2]); // upper right
+            Vector2 LR = uvCalc.UVOffCanvas(origin, aggregatePlaneVertices[3]); // lower right
 
             UVs[0] = LL;
             UVs[1] = UL;

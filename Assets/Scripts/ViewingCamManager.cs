@@ -47,14 +47,6 @@ namespace InterpolatedCamera
             }
         }
 
-        public void DEBUGASSIST()
-        {
-            Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[0].clipPlane.Corner00);
-            Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[0].clipPlane.Corner01);
-            Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[0].clipPlane.Corner11);
-            Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[0].clipPlane.Corner10);
-        }
-
         public GameObject GenerateViewingCamera(int camIndex)
         {
             GameObject viewingCam = new GameObject();

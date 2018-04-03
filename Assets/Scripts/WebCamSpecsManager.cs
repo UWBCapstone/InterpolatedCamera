@@ -8,7 +8,8 @@ namespace InterpolatedCamera
     {
         NULL,
         LOGITECH_C920,
-        ADESSO_CYBERTRACK_V10
+        ADESSO_CYBERTRACK_V10,
+        LAPTOP_WEBCAM
     };
 
     public struct WebCamSpecs
@@ -109,6 +110,27 @@ namespace InterpolatedCamera
                         VerticalResolution);
 
                     break;
+                case WebcamDeviceNames.LAPTOP_WEBCAM:
+                    HorizontalFOV = 75.0f;
+                    VerticalFOV = 56.25f;
+                    NearClippingPlane = 0.3f;
+                    FarClippingPlane = 1000f;
+                    WebcamDeviceName = WebcamDeviceNames.LAPTOP_WEBCAM;
+                    DeviceName = WebcamDeviceName.ToString();
+                    HorizontalResolution = 640;
+                    VerticalResolution = 480;
+
+                    camSpecs = new WebCamSpecs(
+                        HorizontalFOV,
+                        VerticalFOV,
+                        NearClippingPlane,
+                        FarClippingPlane,
+                        WebcamDeviceName,
+                        DeviceName,
+                        HorizontalResolution,
+                        VerticalResolution);
+
+                    break;
                 default:
                     camSpecs = new WebCamSpecs();
                     Debug.LogError("Webcam Device name not recognized. To add webcam device, please modify WebCamSpecs class.");
@@ -130,6 +152,10 @@ namespace InterpolatedCamera
                 || deviceName.ToLower().Contains("USB2.0".ToLower()))
             {
                 return WebcamDeviceNames.ADESSO_CYBERTRACK_V10;
+            }
+            else if(deviceName.ToLower().Contains("Integrated Webcam"))
+            {
+                return WebcamDeviceNames.LAPTOP_WEBCAM;
             }
             else
             {
