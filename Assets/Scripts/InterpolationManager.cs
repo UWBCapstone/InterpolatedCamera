@@ -68,8 +68,15 @@ namespace InterpolatedCamera
             //ClipPlaneManager viewingCamClipPlane = viewingCamManager.ClipPlanes[camIndex];
             //Vector3 origin = MainCamera.transform.position;
             Vector3 origin = viewingCam.transform.position;
-            GameObject interpolatedPlane = aggregateClipPlane.transform.GetChild(0).gameObject;
-            Vector3[] aggregatePlaneVertices = interpolatedPlane.GetComponent<MeshFilter>().mesh.vertices;
+
+            PlaneRect aggregatePlane = aggregateClipPlane.GetComponent<AggregateClipPlane>().GenerateAggregatePlaneRect(viewingCamManager.ClipPlanes);
+            Vector3[] aggregatePlaneVertices = new Vector3[4]
+            {
+                aggregatePlane.Corner00,
+                aggregatePlane.Corner01,
+                aggregatePlane.Corner11,
+                aggregatePlane.Corner10
+            };
 
             // Calculate the UV values of the aggregate plane in terms of the 
             // UV for the clip plane of the given viewing camera clip plane. 
