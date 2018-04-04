@@ -40,10 +40,10 @@ namespace InterpolatedCamera
                 ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
                 //ClipPlanes[i].transform.position = CamStartingPositions[i];
                 
-                Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[i].clipPlane.Corner00);
-                Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[i].clipPlane.Corner01);
-                Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[i].clipPlane.Corner11);
-                Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[i].clipPlane.Corner10);
+                //Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[i].clipPlane.Corner00);
+                //Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[i].clipPlane.Corner01);
+                //Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[i].clipPlane.Corner11);
+                //Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[i].clipPlane.Corner10);
             }
         }
 

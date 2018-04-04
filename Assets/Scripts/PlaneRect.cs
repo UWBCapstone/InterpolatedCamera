@@ -20,6 +20,14 @@ namespace InterpolatedCamera
             p11 = new Vector3(1, 1);
         }
 
+        public PlaneRect(PlaneRect pr)
+        {
+            this.p00 = pr.p00;
+            this.p01 = pr.p01;
+            this.p10 = pr.p10;
+            this.p11 = pr.p11;
+        }
+
         public PlaneRect(Vector3 LowerLeft, Vector3 UpperLeft, Vector3 UpperRight, Vector3 LowerRight) : this()
         {
             p00 = LowerLeft;
@@ -72,6 +80,14 @@ namespace InterpolatedCamera
         #endregion
 
         #region Methods
+        public void CopyTo(PlaneRect pr)
+        {
+            pr.p00 = this.p00;
+            pr.p01 = this.p01;
+            pr.p11 = this.p11;
+            pr.p10 = this.p10;
+        }
+
         public Vector3 Translate(Vector3 vec)
         {
             p00 += vec;

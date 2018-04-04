@@ -15,24 +15,49 @@ namespace InterpolatedCamera
         public const int maxCameras = 8; // Hard coded in shader due to texture array usage
         public GameObject MainCamera;
         public GameObject aggregateClipPlane;
-        public int CamIndexToIgnore = 1;
-        private List<int> CamIndices;
+        public string CamIndicesToIgnore = "1";
+        private List<int> CamIndicesToIgnoreList;
 
         public void Start()
         {
             //AssignToAggregateClipPlaneShader();
             Invoke("AssignToAggregateClipPlaneShader", 2.0f);
-            CamIndices = new List<int>();
-            CamIndices.Add(CamIndexToIgnore);
+            CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
+        }
+
+        private List<int> ParseCamIndicesToIgnore(string commaSeparatedListOfIndices)
+        {
+            List<int> indicesToIgnore = new List<int>();
+            string[] indexStringArray = commaSeparatedListOfIndices.Split(new char[1] { ',' });
+            foreach(string indexString in indexStringArray)
+            {
+                int index;
+                if(int.TryParse(indexString.Trim(), out index))
+                {
+                    if (!indicesToIgnore.Contains(index))
+                    {
+                        indicesToIgnore.Add(index);
+                        if (viewingCamManager.ViewingCameras.Length > index)
+                        {
+                            //Debug.Log("Ignoring input from camera " + index + " (" + viewingCamManager.ViewingCameras[index].GetComponent<WebCamIdentifier>().DeviceNameString + ")");
+                        }
+                    }
+                }
+            }
+
+            return indicesToIgnore;
         }
 
         public void Update()
         {
+            // Update cam indices to ignore
+            CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
+
             // Update textures
             AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
             for(int i = 0; i < viewingCamManager.ViewingCameras.Length; i++)
             {
-                if (!CamIndices.Contains(i))
+                if (!CamIndicesToIgnoreList.Contains(i))
                 {
                     WebCamTexture feed = viewingCamManager.ViewingCameras[i].GetComponent<WebCamIdentifier>().WebCamFeed;
                     if (textureArray != null
@@ -47,6 +72,10 @@ namespace InterpolatedCamera
                     }
                 }
             }
+
+            // Update UVs
+            Vector2[][] uvs = GenerateUVArray();
+            canvas.SetUVArray(uvs);
         }
 
         public void AssignToAggregateClipPlaneShader()
@@ -59,7 +88,7 @@ namespace InterpolatedCamera
             //canvas.SetTextures(texArray);
             //textureArray = texArray;
 
-            AssignToAggregateClipPlaneShader(CamIndices);
+            AssignToAggregateClipPlaneShader(CamIndicesToIgnoreList);
         }
 
         public void AssignToAggregateClipPlaneShader(List<int> camIndicesToIgnore)
@@ -115,14 +144,38 @@ namespace InterpolatedCamera
             //Vector3 origin = MainCamera.transform.position;
             Vector3 origin = viewingCam.transform.position;
 
-            PlaneRect aggregatePlane = aggregateClipPlane.GetComponent<AggregateClipPlane>().GenerateAggregatePlaneRect(viewingCamManager.ClipPlanes);
-            Vector3[] aggregatePlaneVertices = new Vector3[4]
+            //PlaneRect aggregatePlane = aggregateClipPlane.GetComponent<AggregateClipPlane>().GenerateAggregatePlaneRect(viewingCamManager.ClipPlanes);
+            Vector3[] aggregatePlaneVertices;
+            bool interpolatedPlaneInitialized = 
+                aggregateClipPlane.transform.childCount == 1 
+                && aggregateClipPlane.transform.GetChild(0).name.Equals(aggregateClipPlane.GetComponent<AggregateClipPlane>().PlaneName);
+            if (interpolatedPlaneInitialized)
             {
+                GameObject interpolatedPlane = aggregateClipPlane.transform.GetChild(0).gameObject;
+                DebugPlaneRect dpr = interpolatedPlane.GetComponent<DebugPlaneRect>();
+                aggregatePlaneVertices = new Vector3[4]
+                {
+                    dpr.LowerLeft,
+                    dpr.UpperLeft,
+                    dpr.UpperRight,
+                    dpr.LowerRight
+                };
+
+                //Debug.Log("Taking UV values from Interpolated plane debug plane rectangle.");
+            }
+            else
+            {
+                PlaneRect aggregatePlane = aggregateClipPlane.GetComponent<AggregateClipPlane>().GenerateAggregatePlaneRect();
+                aggregatePlaneVertices = new Vector3[4]
+                {
                 aggregatePlane.Corner00,
                 aggregatePlane.Corner01,
                 aggregatePlane.Corner11,
                 aggregatePlane.Corner10
-            };
+                };
+
+                //Debug.Log("Taking UV values from uninitialized plane calculations.");
+            }
 
             // Calculate the UV values of the aggregate plane in terms of the 
             // UV for the clip plane of the given viewing camera clip plane. 

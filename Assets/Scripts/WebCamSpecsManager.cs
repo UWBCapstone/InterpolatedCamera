@@ -72,7 +72,7 @@ namespace InterpolatedCamera
                     HorizontalFOV = 70.42f;
                     VerticalFOV = 43.30f;
                     NearClippingPlane = 0.3f;
-                    FarClippingPlane = 1000;
+                    FarClippingPlane = 3.0f;
                     WebcamDeviceName = WebcamDeviceNames.LOGITECH_C920;
                     DeviceName = WebcamDeviceName.ToString();
                     HorizontalResolution = 640;
@@ -93,7 +93,7 @@ namespace InterpolatedCamera
                     HorizontalFOV = 25.0f;
                     VerticalFOV = 25.0f;
                     NearClippingPlane = 0.3f;
-                    FarClippingPlane = 1000f;
+                    FarClippingPlane = 3.0f;
                     WebcamDeviceName = WebcamDeviceNames.ADESSO_CYBERTRACK_V10;
                     DeviceName = WebcamDeviceName.ToString();
                     HorizontalResolution = 320;
@@ -114,7 +114,7 @@ namespace InterpolatedCamera
                     HorizontalFOV = 75.0f;
                     VerticalFOV = 56.25f;
                     NearClippingPlane = 0.3f;
-                    FarClippingPlane = 1000f;
+                    FarClippingPlane = 3.0f;
                     WebcamDeviceName = WebcamDeviceNames.LAPTOP_WEBCAM;
                     DeviceName = WebcamDeviceName.ToString();
                     HorizontalResolution = 640;
@@ -130,6 +130,26 @@ namespace InterpolatedCamera
                         HorizontalResolution,
                         VerticalResolution);
 
+                    break;
+                case WebcamDeviceNames.NULL:
+                    HorizontalFOV = 0.0f;
+                    VerticalFOV = 0.0f;
+                    NearClippingPlane = 0.0f;
+                    FarClippingPlane = 0.0f;
+                    WebcamDeviceName = WebcamDeviceNames.NULL;
+                    DeviceName = WebcamDeviceName.ToString();
+                    HorizontalResolution = 0;
+                    VerticalResolution = 0;
+
+                    camSpecs = new WebCamSpecs(
+                        HorizontalFOV,
+                        VerticalFOV,
+                        NearClippingPlane,
+                        FarClippingPlane,
+                        WebcamDeviceName,
+                        DeviceName,
+                        HorizontalResolution,
+                        VerticalResolution);
                     break;
                 default:
                     camSpecs = new WebCamSpecs();

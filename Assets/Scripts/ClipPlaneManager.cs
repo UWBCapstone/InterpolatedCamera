@@ -50,10 +50,10 @@ namespace InterpolatedCamera
             //Debug.Log("Distance is " + dis);
             //Debug.Log("Hypotenuse is " + hypotenuse);
 
-            Debug.Log("ClipPlane Corner00 = " + calc00());
-            Debug.Log("ClipPlane Corner01 = " + calc01());
-            Debug.Log("ClipPlane Corner10 = " + calc10());
-            Debug.Log("ClipPlane Corner11 = " + calc11());
+            //Debug.Log("ClipPlane Corner00 = " + calc00());
+            //Debug.Log("ClipPlane Corner01 = " + calc01());
+            //Debug.Log("ClipPlane Corner10 = " + calc10());
+            //Debug.Log("ClipPlane Corner11 = " + calc11());
 
             clipPlane = new PlaneRect(calc00(), calc11(), -forward, false);
         }
