@@ -16,7 +16,8 @@ namespace InterpolatedCamera
         public Texture2D[] TextureArray;
         public float PlaneShrinkFactor = 0.0f;
         public List<Vector2> UVList;
-        public float PlanePullDistance = 0.5f;
+        public float PlanePullDistance = 0.05f;
+
 
         private bool initialized = false;
 
@@ -40,7 +41,7 @@ namespace InterpolatedCamera
             PlaneRect pr = GenerateAggregatePlaneRect();
             GameObject go = GenerateAggregateClipPlaneObject(pr);
             go.transform.parent = gameObject.transform;
-            InvokeRepeating("RefreshShaderInfo", 2.0f, 2.0f);
+            InvokeRepeating("RefreshShaderInfo", 1.0f, 2.0f);
             //Invoke("RefreshShaderInfo", 2.0f);
         }
 
@@ -162,35 +163,43 @@ namespace InterpolatedCamera
         public PlaneRect GenerateAggregatePlaneRect()
         {
             ClipPlaneManager clipPlane = new ClipPlaneManager(MainCamera.GetComponent<Camera>());
+            // Ensure that plane calculations won't get messed up by overlaying 
+            // a clipping plane in the same position as the camera, which 
+            // causes NaN errors in UV calculations
+            //clipPlane.clipPlane.Translate(new Vector3(0, 0, WebCamSpecsManager.DefaultFarClippingPlane));
 
             return clipPlane.clipPlane;
         }
 
         public GameObject GenerateAggregateClipPlaneObject(PlaneRect planeRect)
         {
-            GameObject aggregateClipPlane = new GameObject();
+            GameObject interpolatedPlane = new GameObject();
 
             // Generate the plane rectangle
             Vector3 pos;
             Vector3 forward;
             //PlaneRect planeRect = GenerateAggregatePlaneRect(clipPlanes, out pos, out forward);
             //PlaneRect planeRect = GenerateAggregatePlaneRect(clipPlanes);
-            DebugPlaneRect dpr = aggregateClipPlane.AddComponent<DebugPlaneRect>(); // Allows for easy access to see where the 
+            DebugPlaneRect dpr = interpolatedPlane.AddComponent<DebugPlaneRect>(); // Allows for easy access to see where the 
             dpr.SetCorners(planeRect.Corner00, planeRect.Corner01, planeRect.Corner11, planeRect.Corner10);
             dpr.AssociatePlaneRect(planeRect);
 
+            // Add UVCalc script for easier UI control access and intersection calculation later
+            var uvCalc = interpolatedPlane.AddComponent<UVCalc>();
+            uvCalc.SetRepresentativePlane(MainCamera.GetComponent<Camera>());
+
             // Generate the mesh and object for the plane
             Mesh planeMesh = GeneratePlaneMesh(planeRect);
-            var mf = aggregateClipPlane.AddComponent<MeshFilter>();
+            var mf = interpolatedPlane.AddComponent<MeshFilter>();
             mf.mesh = planeMesh;
-            var mr = aggregateClipPlane.AddComponent<MeshRenderer>();
+            var mr = interpolatedPlane.AddComponent<MeshRenderer>();
 
             // Set material
             Material planeMat = GeneratePlaneMaterial();
             mr.material = planeMat;
 
             // Assign meta attributes
-            aggregateClipPlane.name = PlaneName;
+            interpolatedPlane.name = PlaneName;
 
             // Adjust position and orientation of generated plane object
             // (Make it face the user (the forward used is the forward 
@@ -199,7 +208,7 @@ namespace InterpolatedCamera
             // the "camera" it is associated with))
             //aggregateClipPlane.transform.forward = -forward;
             //aggregateClipPlane.transform.position = pos + forward.normalized * FarClipDistance;
-            aggregateClipPlane.transform.position += -aggregateClipPlane.transform.forward.normalized * PlanePullDistance; // -forward.normalized * 3.0f
+            interpolatedPlane.transform.position += -interpolatedPlane.transform.forward.normalized * PlanePullDistance; // -forward.normalized * 3.0f
 
             //Debug.Log("Aggregate calculated pos = " + aggregateClipPlane.transform.position);
 
@@ -213,10 +222,10 @@ namespace InterpolatedCamera
             }
             else
             {
-                GameObject.Destroy(aggregateClipPlane);
+                GameObject.Destroy(interpolatedPlane);
             }
 
-            return aggregateClipPlane;
+            return interpolatedPlane;
         }
         
         // NOTE: If generating dynamic aggregate clip plane as originally intended, InterpolationManager's GenerateUV needs to call this instead of GenerateAggregatePlaneRect

@@ -35,6 +35,7 @@ namespace InterpolatedCamera
         public void AssociatePlaneRect(PlaneRect pr)
         {
             this.planeRect = pr;
+            Debug.Log("Plane Rect associated! Center = " + Center);
         }
 
         public void Translate(Vector3 dir)
@@ -42,6 +43,20 @@ namespace InterpolatedCamera
             if(planeRect != null)
             {
                 planeRect.Translate(dir);
+            }
+        }
+
+        public RaycastHit Intersect(Ray ray, Vector3 origin)
+        {
+            if (planeRect != null)
+            {
+                return planeRect.Intersect(ray, origin);
+            }
+            else
+            {
+                RaycastHit hitInfo;
+                Physics.Raycast(ray, out hitInfo, 0);
+                return hitInfo;
             }
         }
 

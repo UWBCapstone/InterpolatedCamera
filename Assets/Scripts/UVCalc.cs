@@ -84,10 +84,18 @@ namespace InterpolatedCamera
             Vector3 dir = point - origin;
             Ray ray = new Ray(origin, dir);
             RaycastHit rh = representativePlane.Intersect(ray, origin);
-
+            
             ClipPlaneManager clipPlane = gameObject.GetComponent<ClipPlaneManager>();
 
+            Debug.Log("rh.point = " + rh.point);
+            Debug.Log("UV00 = " + UV(clipPlane.ClipRect, rh.point));
+
             return UV(clipPlane.ClipRect, rh.point);
+        }
+
+        public RaycastHit IntersectRepresentativePlane(Ray ray, Vector3 origin)
+        {
+            return representativePlane.Intersect(ray, origin);
         }
 
         ///// <summary>
