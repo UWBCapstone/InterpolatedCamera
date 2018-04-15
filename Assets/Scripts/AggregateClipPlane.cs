@@ -200,6 +200,7 @@ namespace InterpolatedCamera
 
             // Assign meta attributes
             interpolatedPlane.name = PlaneName;
+            interpolatedPlane.layer = LayerManager.GetLayerMask(CloakLayers.TableView);
 
             // Adjust position and orientation of generated plane object
             // (Make it face the user (the forward used is the forward 

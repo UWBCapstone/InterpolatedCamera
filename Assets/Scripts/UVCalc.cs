@@ -87,8 +87,8 @@ namespace InterpolatedCamera
             
             ClipPlaneManager clipPlane = gameObject.GetComponent<ClipPlaneManager>();
 
-            Debug.Log("rh.point = " + rh.point);
-            Debug.Log("UV00 = " + UV(clipPlane.ClipRect, rh.point));
+            //Debug.Log("rh.point = " + rh.point);
+            //Debug.Log("UV00 = " + UV(clipPlane.ClipRect, rh.point));
 
             return UV(clipPlane.ClipRect, rh.point);
         }

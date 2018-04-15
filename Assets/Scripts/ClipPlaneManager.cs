@@ -106,10 +106,10 @@ namespace InterpolatedCamera
             //Debug.Log("Hypotenuse is " + hypotenuse);
 
             clipPlane = new PlaneRect(calc00(), calc11(), -forward, false);
-            Debug.Log("deg = " + deg);
-            Debug.Log("New planeRect 00 = " + calc00());
-            Debug.Log("New planeRect 11 = " + calc11());
-            Debug.Log("opp = " + opposite);
+            //Debug.Log("deg = " + deg);
+            //Debug.Log("New planeRect 00 = " + calc00());
+            //Debug.Log("New planeRect 11 = " + calc11());
+            //Debug.Log("opp = " + opposite);
         }
         
         public static List<ClipPlaneManager> SortClipPlanes(ClipPlaneManager[] clipPlanes)

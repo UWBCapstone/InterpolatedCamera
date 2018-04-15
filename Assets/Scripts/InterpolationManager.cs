@@ -161,7 +161,7 @@ namespace InterpolatedCamera
                     dpr.LowerRight
                 };
 
-                Debug.Log("Taking UV values from Interpolated plane debug plane rectangle.");
+                //Debug.Log("Taking UV values from Interpolated plane debug plane rectangle.");
             }
             else
             {
@@ -177,10 +177,10 @@ namespace InterpolatedCamera
                 Debug.Log("Taking UV values from uninitialized plane calculations.");
             }
 
-            Debug.Log("aggregatePlaneVertices[0] = " + aggregatePlaneVertices[0]);
-            Debug.Log("aggregatePlaneVertices[1] = " + aggregatePlaneVertices[1]);
-            Debug.Log("aggregatePlaneVertices[2] = " + aggregatePlaneVertices[2]);
-            Debug.Log("aggregatePlaneVertices[3] = " + aggregatePlaneVertices[3]);
+            //Debug.Log("aggregatePlaneVertices[0] = " + aggregatePlaneVertices[0]);
+            //Debug.Log("aggregatePlaneVertices[1] = " + aggregatePlaneVertices[1]);
+            //Debug.Log("aggregatePlaneVertices[2] = " + aggregatePlaneVertices[2]);
+            //Debug.Log("aggregatePlaneVertices[3] = " + aggregatePlaneVertices[3]);
 
             // Calculate the UV values of the aggregate plane in terms of the 
             // UV for the clip plane of the given viewing camera clip plane. 

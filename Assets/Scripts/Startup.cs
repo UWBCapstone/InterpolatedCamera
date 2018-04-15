@@ -50,6 +50,12 @@ namespace InterpolatedCamera
             {
                 TagsAndLayers.AddLayer(layer);
             }
+
+            List<string> layerList = LayerManager.GetLayerNameList();
+            foreach(string layer in layerList)
+            {
+                TagsAndLayers.AddLayer(layer);
+            }
         }
     }
 #endif
