@@ -23,7 +23,8 @@ namespace InterpolatedCamera
         public void SetShader()
         {
             var mr = gameObject.GetComponent<MeshRenderer>();
-            var tm = GameObject.Find("TableManager").GetComponent<TableManager>();
+            //var tm = GameObject.Find("TableManager").GetComponent<TableManager>();
+            var tm = GameObject.Find("TableManager").GetComponent<TableManagerNew>();
 
             mr.material.SetVector("_LLUV", new Vector4(LowerLeftUV.x, LowerLeftUV.y, tm.LowerLeftZ, 0));
             mr.material.SetVector("_ULUV", new Vector4(UpperLeftUV.x, UpperLeftUV.y, tm.UpperLeftZ, 0));
@@ -34,10 +35,15 @@ namespace InterpolatedCamera
         // Calculate UVs from 
         public void SetUVs(List<Vector2> uvs)
         {
+            //LowerLeftUV = uvs[0];
+            //UpperLeftUV = uvs[1];
+            //UpperRightUV = uvs[2];
+            //LowerRightUV = uvs[3];
+
             LowerLeftUV = uvs[0];
             UpperLeftUV = uvs[1];
-            UpperRightUV = uvs[2];
-            LowerRightUV = uvs[3];
+            UpperRightUV = uvs[uvs.Count / 2];
+            LowerRightUV = uvs[uvs.Count / 2 + 1];
         }
 
         /// <summary>

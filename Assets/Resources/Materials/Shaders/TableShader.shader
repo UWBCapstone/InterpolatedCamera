@@ -69,24 +69,68 @@
 
 
 
-				float uDenominator = (1 - i.uv.x) * (1 / i.vertex.w) + i.uv.x * (1 / i.vertex.w);
-				float vDenominator = (1 - i.uv.y) * (1 / i.vertex.w) + i.uv.y * (1 / i.vertex.w);
+			//	float uDenominator = (1 - i.uv.x) * (1 / i.vertex.w) + i.uv.x * (1 / i.vertex.w);
+			//	float vDenominator = (1 - i.uv.y) * (1 / i.vertex.w) + i.uv.y * (1 / i.vertex.w);
 
-				float uBotNumerator = (1 - i.uv.x) * (_LLUV.x / _LLUV.z) + i.uv.x * (_LRUV.x / _LRUV.z);
-				float uBotDenominator = (1 - i.uv.x) * (1 / _LLUV.z) + i.uv.x * (1 / _LRUV.z);
-			float uTopNumerator = (1 - i.uv.x) * (_ULUV.x / _ULUV.z) + i.uv.x * (_URUV.x / _URUV.z);
-			float uTopDenominator = (1 - i.uv.x) * (1 / _ULUV.z) + i.uv.x * (1 / _URUV.z);
+			//	float uBotNumerator = (1 - i.uv.x) * (_LLUV.x / _LLUV.z) + i.uv.x * (_LRUV.x / _LRUV.z);
+			//	float uBotDenominator = (1 - i.uv.x) * (1 / _LLUV.z) + i.uv.x * (1 / _LRUV.z);
+			//float uTopNumerator = (1 - i.uv.x) * (_ULUV.x / _ULUV.z) + i.uv.x * (_URUV.x / _URUV.z);
+			//float uTopDenominator = (1 - i.uv.x) * (1 / _ULUV.z) + i.uv.x * (1 / _URUV.z);
+			//float uBot = uBotNumerator / uBotDenominator;
+			//float uTop = uTopNumerator / uTopDenominator;
+			//float u = lerp(uBot, uTop, i.uv.y);
+			////float u = (1 - i.uv.y) * (uBot / i.vertex.w) + i.uv.y * (uTop / i.vertex.w);
+			////u = u / vDenominator;
+
+
+			//float vLeftNumerator = (1 - i.uv.y) * (_LLUV.y / _LLUV.z) + i.uv.y * (_ULUV.y / _ULUV.z);
+			//float vLeftDenominator = (1 - i.uv.y) * (1 / _LLUV.z) + i.uv.y * (1 / _ULUV.z);
+			//float vRightNumerator = (1 - i.uv.y) * (_LRUV.y / _LRUV.z) + i.uv.y * (_URUV.y / _URUV.z);
+			//float vRightDenominator = (1 - i.uv.y) * (1 / _LRUV.z) + i.uv.y * (1 / _URUV.z);
+			//float vLeft = vLeftNumerator / vLeftDenominator;
+			//float vRight = vRightNumerator / vRightDenominator;
+			//float v = lerp(vLeft, vRight, i.uv.x);
+			///*float v = (1 - i.uv.x) * (vLeft / i.vertex.w) + i.uv.x * (vRight / i.vertex.w);
+			//v = v / uDenominator;*/
+
+			//float2 trueUV = float2(u, v);
+			//fixed4 col = tex2D(_MainTex, trueUV);
+
+
+
+
+
+
+
+
+				/*float uDenominator = (1 - i.uv.x) * (1 / i.vertex.w) + i.uv.x * (1 / i.vertex.w);
+			float vDenominator = (1 - i.uv.y) * (1 / i.vertex.w) + i.uv.y * (1 / i.vertex.w);
+
+			float uBotNumerator = (1 - i.uv.x) * (_LLUV.x / _ULUV.z) + i.uv.x * (_LRUV.x / _URUV.z);
+			float uBotDenominator = (1 - i.uv.x) * (1 / _ULUV.z) + i.uv.x * (1 / _URUV.z);
+			float uTopNumerator = (1 - i.uv.x) * (_ULUV.x / _LLUV.z) + i.uv.x * (_URUV.x / _LRUV.z);
+			float uTopDenominator = (1 - i.uv.x) * (1 / _LLUV.z) + i.uv.x * (1 / _LRUV.z);
 			float uBot = uBotNumerator / uBotDenominator;
 			float uTop = uTopNumerator / uTopDenominator;
-			float u = lerp(uBot, uTop, i.uv.y);
-			//float u = (1 - i.uv.y) * (uBot / i.vertex.w) + i.uv.y * (uTop / i.vertex.w);
-			//u = u / vDenominator;
+			float u = lerp(uBot, uTop, i.uv.y);*/
+			/*float u = (1 - i.uv.y) * (uBot / i.vertex.w) + i.uv.y * (uTop / i.vertex.w);
+			u = u / vDenominator;*/
+			/*float uBot = lerp(_LLUV.x, _LRUV.x, i.uv.x);
+			float uTop = lerp(_ULUV.x, _URUV.x, i.uv.x);
+			float u = lerp(uBot, uTop, i.uv.y);*/
 
+			float uBot = lerp(_LLUV.x, _LRUV.x, i.uv.x);
+			float uTop = lerp(_ULUV.x, _URUV.x, i.uv.x);
+			float topZ = _ULUV.z;
+			float botZ = _LLUV.z;
+			float uNumerator = (1 - i.uv.y) * (uBot / topZ) + i.uv.y * (uTop / botZ);
+			float uDenominator = (1 - i.uv.y) * (1 / topZ) + i.uv.y * (1 / botZ);
+			float u = uNumerator / uDenominator;
 
-			float vLeftNumerator = (1 - i.uv.y) * (_LLUV.y / _LLUV.z) + i.uv.y * (_ULUV.y / _ULUV.z);
-			float vLeftDenominator = (1 - i.uv.y) * (1 / _LLUV.z) + i.uv.y * (1 / _ULUV.z);
-			float vRightNumerator = (1 - i.uv.y) * (_LRUV.y / _LRUV.z) + i.uv.y * (_URUV.y / _URUV.z);
-			float vRightDenominator = (1 - i.uv.y) * (1 / _LRUV.z) + i.uv.y * (1 / _URUV.z);
+			float vLeftNumerator = (1 - i.uv.y) * (_LLUV.y / _ULUV.z) + i.uv.y * (_ULUV.y / _LLUV.z);
+			float vLeftDenominator = (1 - i.uv.y) * (1 / _ULUV.z) + i.uv.y * (1 / _LLUV.z);
+			float vRightNumerator = (1 - i.uv.y) * (_LRUV.y / _URUV.z) + i.uv.y * (_URUV.y / _LRUV.z);
+			float vRightDenominator = (1 - i.uv.y) * (1 / _URUV.z) + i.uv.y * (1 / _LRUV.z);
 			float vLeft = vLeftNumerator / vLeftDenominator;
 			float vRight = vRightNumerator / vRightDenominator;
 			float v = lerp(vLeft, vRight, i.uv.x);
