@@ -30,8 +30,8 @@ namespace InterpolatedCamera
 
         public void InitViewingCameras()
         {
-            ViewingCameras = new GameObject[webCamManager.NumWebCams];
-            ClipPlanes = new ClipPlaneManager[ViewingCameras.Length];
+            //ViewingCameras = new GameObject[webCamManager.NumWebCams];
+            //ClipPlanes = new ClipPlaneManager[ViewingCameras.Length];
 
             List<GameObject> viewingCameraList = new List<GameObject>();
             List<ClipPlaneManager> clipPlaneList = new List<ClipPlaneManager>();
@@ -42,10 +42,11 @@ namespace InterpolatedCamera
                 ignorableWebCamIndices.AddRange(webCamManager.GetIndicesFor(name));
             }
             
-            for (int i = 0; i < ViewingCameras.Length; i++)
+            for (int i = 0; i < webCamManager.NumWebCams; i++)
             {
                 if (ignorableWebCamIndices.Contains(i))
                 {
+                    Debug.Log("Ignoring camera[" + i + "]...");
                     continue;
                 }
 
@@ -71,11 +72,11 @@ namespace InterpolatedCamera
                 //Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[i].clipPlane.Corner10);
             }
 
-            //ViewingCameras = viewingCameraList.ToArray();
-            //ClipPlanes = clipPlaneList.ToArray();
-            ViewingCameras = new GameObject[1];
-            ViewingCameras[0] = viewingCameraList[0];
+            ViewingCameras = viewingCameraList.ToArray();
             ClipPlanes = clipPlaneList.ToArray();
+            //ViewingCameras = new GameObject[1];
+            //ViewingCameras[0] = viewingCameraList[0];
+            //ClipPlanes = clipPlaneList.ToArray();
         }
 
         public GameObject GenerateViewingCamera(int camIndex)
