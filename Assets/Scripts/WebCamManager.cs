@@ -212,5 +212,46 @@ namespace InterpolatedCamera
                 return playingCameras;
             }
         }
+        
+        public WebCamTexture GetTextureFor(WebcamDeviceNames deviceName)
+        {
+            for (int i = 0; i < NumWebCams; i++)
+            {
+                if (VideoFeeds.Length > i)
+                {
+                    var specsName = WebCamSpecsManager.WebCamDeviceToSpecsName(WebCams[i]);
+                    if (specsName == deviceName)
+                    {
+                        return VideoFeeds[i];
+                    }
+                }
+                else
+                {
+                    Debug.LogError("Inconsistent number of webcams and feeds.");
+                    break;
+                }
+            }
+
+            return null;
+        }
+
+        public List<int> GetIndicesFor(WebcamDeviceNames deviceName)
+        {
+            List<int> indexList = new List<int>();
+
+            for(int i = 0; i < NumWebCams; i++)
+            {
+                if(VideoFeeds.Length > i)
+                {
+                    var specsName = WebCamSpecsManager.WebCamDeviceToSpecsName(WebCams[i]);
+                    if(specsName == deviceName)
+                    {
+                        indexList.Add(i);
+                    }
+                }
+            }
+
+            return indexList;
+        }
     }
 }

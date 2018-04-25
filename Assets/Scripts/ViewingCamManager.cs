@@ -7,6 +7,7 @@ namespace InterpolatedCamera
     public class ViewingCamManager : MonoBehaviour
     {
         public WebCamManager webCamManager;
+        public WebcamDeviceNames[] IgnorableWebCams = new WebcamDeviceNames[3];
         public GameObject[] ViewingCameras;
         public ClipPlaneManager[] ClipPlanes;
         public Vector3[] CamStartingPositions = new Vector3[8]; // InterpolationManager.maxCameras
@@ -21,7 +22,9 @@ namespace InterpolatedCamera
 
             for(int i = 0; i < ViewingCameras.Length; i++)
             {
-                UpdateViewingCameraClipPlane(i);
+                //UpdateViewingCameraClipPlane(i);
+                GameObject viewingCam = ViewingCameras[i];
+                UpdateViewingCameraClipPlane(viewingCam.GetComponent<ClipPlaneManager>(), viewingCam);
             }
         }
 
@@ -30,21 +33,49 @@ namespace InterpolatedCamera
             ViewingCameras = new GameObject[webCamManager.NumWebCams];
             ClipPlanes = new ClipPlaneManager[ViewingCameras.Length];
 
+            List<GameObject> viewingCameraList = new List<GameObject>();
+            List<ClipPlaneManager> clipPlaneList = new List<ClipPlaneManager>();
+
+            List<int> ignorableWebCamIndices = new List<int>();
+            foreach(WebcamDeviceNames name in IgnorableWebCams)
+            {
+                ignorableWebCamIndices.AddRange(webCamManager.GetIndicesFor(name));
+            }
+            
             for (int i = 0; i < ViewingCameras.Length; i++)
             {
-                ViewingCameras[i] = GenerateViewingCamera(i);
-                associateClipPlane(i);
+                if (ignorableWebCamIndices.Contains(i))
+                {
+                    continue;
+                }
+
+                //ViewingCameras[i] = GenerateViewingCamera(i);
+                GameObject viewingCam = GenerateViewingCamera(i);
+                ClipPlaneManager clipPlane = associateClipPlane(viewingCam);
 
                 // ERROR TESTING - OFFSETTING THE CAMERA STARTING POSITION MESSES UP THE PLANERECT HORRENDOUSLY - WHY?
-                ViewingCameras[i].transform.position = CamStartingPositions[i];
-                ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
-                //ClipPlanes[i].transform.position = CamStartingPositions[i];
-                
+                viewingCam.transform.position = CamStartingPositions[i];
+                clipPlane.ClipRect.Translate(CamStartingPositions[i]);
+
+                viewingCameraList.Add(viewingCam);
+                clipPlaneList.Add(clipPlane);
+
+                //// ERROR TESTING - OFFSETTING THE CAMERA STARTING POSITION MESSES UP THE PLANERECT HORRENDOUSLY - WHY?
+                //ViewingCameras[i].transform.position = CamStartingPositions[i];
+                //ClipPlanes[i].ClipRect.Translate(CamStartingPositions[i]);
+                ////ClipPlanes[i].transform.position = CamStartingPositions[i];
+
                 //Debug.Log("Generated clip plane Corner00 = " + ClipPlanes[i].clipPlane.Corner00);
                 //Debug.Log("Generated clip plane Corner01 = " + ClipPlanes[i].clipPlane.Corner01);
                 //Debug.Log("Generated clip plane Corner11 = " + ClipPlanes[i].clipPlane.Corner11);
                 //Debug.Log("Generated clip plane Corner10 = " + ClipPlanes[i].clipPlane.Corner10);
             }
+
+            //ViewingCameras = viewingCameraList.ToArray();
+            //ClipPlanes = clipPlaneList.ToArray();
+            ViewingCameras = new GameObject[1];
+            ViewingCameras[0] = viewingCameraList[0];
+            ClipPlanes = clipPlaneList.ToArray();
         }
 
         public GameObject GenerateViewingCamera(int camIndex)
@@ -97,16 +128,28 @@ namespace InterpolatedCamera
         /// Must be called after initializing the viewing cameras.
         /// </summary>
         /// <param name="camIndex"></param>
-        private void associateClipPlane(int camIndex)
+        private ClipPlaneManager associateClipPlane(GameObject viewingCam)
         {
-            ClipPlaneManager clipPlane = ViewingCameras[camIndex].AddComponent<ClipPlaneManager>();
-            ClipPlanes[camIndex] = clipPlane;
-            UpdateViewingCameraClipPlane(camIndex);
+            //ClipPlaneManager clipPlane = ViewingCameras[camIndex].AddComponent<ClipPlaneManager>();
+            //ClipPlanes[camIndex] = clipPlane;
+            ClipPlaneManager clipPlane = viewingCam.AddComponent<ClipPlaneManager>();
+            //UpdateViewingCameraClipPlane(camIndex);
+            UpdateViewingCameraClipPlane(clipPlane, viewingCam);
             
             // Add miscellaneous scripts
-            GameObject viewingCam = ViewingCameras[camIndex];
             UVCalc uvCalc = viewingCam.AddComponent<UVCalc>();
             uvCalc.SetRepresentativePlane(viewingCam.GetComponent<Camera>());
+
+            return clipPlane;
+        }
+
+        public void UpdateViewingCameraClipPlane(ClipPlaneManager clipPlane, GameObject viewingCam)
+        {
+            Camera cam = viewingCam.GetComponent<Camera>();
+            if(cam != null)
+            {
+                clipPlane.UpdateInfo(cam);
+            }
         }
 
         public void UpdateViewingCameraClipPlane(int camIndex)

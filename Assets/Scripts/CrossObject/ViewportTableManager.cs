@@ -4,12 +4,11 @@ using UnityEngine;
 
 namespace InterpolatedCamera
 {
-    public class TableManagerNew: MonoBehaviour
+    public class ViewportTableManager: MonoBehaviour
     {
         public Camera MainCamera;
         public Camera TableCamera;
         public GameObject WorldObjectParent;
-        public GameObject Table;
         public int NumberOfVertices = 10000;
         public string TableName = "Table";
         public Vector2 LowerLeftUV = new Vector2();
@@ -23,7 +22,7 @@ namespace InterpolatedCamera
 
         public void Awake()
         {
-            Table = MakeTable();
+            //Table = MakeTable();
         }
 
         public GameObject MakeTable()
@@ -45,6 +44,9 @@ namespace InterpolatedCamera
             var mr = generatedTable.AddComponent<MeshRenderer>();
             mf.mesh = tableMesh;
             mr.material = tableMaterial;
+
+            var mc = generatedTable.AddComponent<MeshCollider>();
+            mc.sharedMesh = tableMesh;
 
             // Add custom scripts
             var tss = generatedTable.AddComponent<TableShaderSetter>();

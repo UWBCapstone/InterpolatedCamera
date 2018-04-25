@@ -15,14 +15,14 @@ namespace InterpolatedCamera
         public const int maxCameras = 8; // Hard coded in shader due to texture array usage
         public GameObject MainCamera;
         public GameObject aggregateClipPlane;
-        public string CamIndicesToIgnore = "1";
-        private List<int> CamIndicesToIgnoreList;
+        //public string CamIndicesToIgnore = "1";
+        //private List<int> CamIndicesToIgnoreList;
 
         public void Start()
         {
             //AssignToAggregateClipPlaneShader();
             Invoke("AssignToAggregateClipPlaneShader", 2.0f);
-            CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
+            //CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
         }
 
         private List<int> ParseCamIndicesToIgnore(string commaSeparatedListOfIndices)
@@ -51,14 +51,14 @@ namespace InterpolatedCamera
         public void Update()
         {
             // Update cam indices to ignore
-            CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
+            //CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
 
             // Update textures
             AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
             for(int i = 0; i < viewingCamManager.ViewingCameras.Length; i++)
             {
-                if (!CamIndicesToIgnoreList.Contains(i))
-                {
+                //if (!CamIndicesToIgnoreList.Contains(i))
+                //{
                     WebCamTexture feed = viewingCamManager.ViewingCameras[i].GetComponent<WebCamIdentifier>().WebCamFeed;
                     if (textureArray != null
                         && textureArray.Length > i)
@@ -70,7 +70,7 @@ namespace InterpolatedCamera
                     {
                         Graphics.CopyTexture(feed, canvas.TextureArray[i]);
                     }
-                }
+                //}
             }
 
             // Update UVs
@@ -78,30 +78,31 @@ namespace InterpolatedCamera
             canvas.SetUVArray(uvs);
         }
 
+        //public void AssignToAggregateClipPlaneShader()
+        //{
+        //    //AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
+        //    //Vector2[][] uvArray = GenerateUVArray();
+        //    //canvas.SetUVArray(uvArray);
+        //    ////Texture2DArray texArray = GenerateTextureArray();
+        //    //Texture2D[] texArray = GenerateTextureArray();
+        //    //canvas.SetTextures(texArray);
+        //    //textureArray = texArray;
+
+        //    AssignToAggregateClipPlaneShader(CamIndicesToIgnoreList);
+        //}
+
+        //public void AssignToAggregateClipPlaneShader(List<int> camIndicesToIgnore)
         public void AssignToAggregateClipPlaneShader()
-        {
-            //AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
-            //Vector2[][] uvArray = GenerateUVArray();
-            //canvas.SetUVArray(uvArray);
-            ////Texture2DArray texArray = GenerateTextureArray();
-            //Texture2D[] texArray = GenerateTextureArray();
-            //canvas.SetTextures(texArray);
-            //textureArray = texArray;
-
-            AssignToAggregateClipPlaneShader(CamIndicesToIgnoreList);
-        }
-
-        public void AssignToAggregateClipPlaneShader(List<int> camIndicesToIgnore)
         {
             AggregateClipPlane canvas = aggregateClipPlane.GetComponent<AggregateClipPlane>();
             Vector2[][] uvArray = GenerateUVArray();
             Texture2D[] texArray = GenerateTextureArray();
 
-            foreach(int index in camIndicesToIgnore)
-            {
-                uvArray[index] = GenerateBlankUV();
-                texArray[index] = GenerateBlackTexture();
-            }
+            //foreach(int index in camIndicesToIgnore)
+            //{
+            //    uvArray[index] = GenerateBlankUV();
+            //    texArray[index] = GenerateBlackTexture();
+            //}
 
             canvas.SetUVArray(uvArray);
             canvas.SetTextures(texArray);
