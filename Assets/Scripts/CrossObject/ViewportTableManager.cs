@@ -20,11 +20,16 @@ namespace InterpolatedCamera
         public Vector2 LowerRightUV = new Vector2();
         public float LowerRightZ = 0.3f;
 
+        public Vector3 World00 = new Vector3();
+        public Vector3 World01 = new Vector3();
+        public Vector3 World11 = new Vector3();
+        public Vector3 World10 = new Vector3();
+
         public void Awake()
         {
             //Table = MakeTable();
         }
-
+        
         public GameObject MakeTable()
         {
             // Use the four points passed in
@@ -107,6 +112,11 @@ namespace InterpolatedCamera
             Vector3 UL = MainCamera.ViewportToWorldPoint(UL3);
             Vector3 UR = MainCamera.ViewportToWorldPoint(UR3);
             Vector3 LR = MainCamera.ViewportToWorldPoint(LR3);
+
+            World00 = LL;
+            World01 = UL;
+            World11 = UR;
+            World10 = LR;
 
             Vector3 TopVector = UR - UL;
             Vector3 BottomVector = LL - LR;
