@@ -16,8 +16,19 @@ namespace InterpolatedCamera
         {
             if(ViewingCameras.Length != webCamManager.NumWebCams)
             {
-                DestroyViewingCameras();
-                InitViewingCameras();
+                int ignoredWebCams = 0;
+                foreach(var cam in IgnorableWebCams)
+                {
+                    if(cam != WebcamDeviceNames.NULL)
+                    {
+                        ignoredWebCams++;
+                    }
+                }
+                if (ViewingCameras.Length + ignoredWebCams != webCamManager.NumWebCams)
+                {
+                    DestroyViewingCameras();
+                    InitViewingCameras();
+                }
             }
 
             for(int i = 0; i < ViewingCameras.Length; i++)
