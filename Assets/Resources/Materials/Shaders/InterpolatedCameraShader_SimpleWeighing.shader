@@ -297,20 +297,27 @@
 		// 4) Calculate intersection position of viewing camera dir and all 4 frustum planes
 		// 4-0) Calculate distance to plane intersection
 		////float disPlane = (dot((frustumFarLL - _ViewCamPos), cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))) / (dot(_ViewCamDir, cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))))); // Calculate distance to hit the projection plane
-		float disPlane = (dot((frustumFarLL - pixelCamPos), cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))) / (dot(_ViewCamDir, cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))))); // Calculate distance to hit the projection plane
+		float disPlane = (dot((frustumFarLL - _ViewCamPos), cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))) / (dot(_ViewCamDir, cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))))); // Calculate distance to hit the projection plane
 		// ******************************************************************************************************************
 		float4 planePoint = frustumFarLL;
 		float4 planeNormal = fLNorm;
 		float4 nearPlanePoint = frustumNearLL;
+		float4 otherFrustumOrigin = _CamPos1;
+		float4 otherFrustumCent = _CamPos1 + _CamDir1 * _cam1Far;
+		float4 otherFrustumOppFarHeight = _cam1Far * tan(radians(_cam0Angle));
+		float4 otherFrustumOppFarWidth = _cam1Aspect * otherFrustumOppFarHeight;
+		float4 otherFrustumUR = otherFrustumCent + _cam1Right * oppFarWidth + _cam1Up * oppFarHeight;
+		float4 otherFrustumLR = otherFrustumCent + _cam1Right * oppFarWidth - _cam1Up * oppFarHeight;
+		float4 otherFrustumEnd = otherFrustumLR + ((otherFrustumUR - otherFrustumLR) / 2);
+
+		float4 otherFrustumDir = otherFrustumEnd - otherFrustumOrigin;
 
 		// 4aL) calculate the distance between the linePoint and the line-plane intersection point
-		////float dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
-		float dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
-		float dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
+		float dotNumerator = dot((planePoint - otherFrustumOrigin), planeNormal);
+		float dotDenominator = dot(otherFrustumDir, planeNormal); // Assumes lineVec is normalized
 		float dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bL) calculate the intersection point from the given info
-		////float4 intersection = _ViewCamPos + dis * _ViewCamDir;
-		float4 intersection = pixelCamPos + dis * _ViewCamDir;
+		float4 intersection = otherFrustumOrigin + dis * otherFrustumDir;
 		// 4cL) calculate if the frustum was actually intersected
 		float fLIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dL) set the intersection to the tracked frustum intersection point vector
@@ -320,15 +327,18 @@
 		planePoint = frustumFarUL;
 		planeNormal = fTNorm;
 		nearPlanePoint = frustumNearUL;
+		float4 otherFrustumUL = otherFrustumCent - _cam1Right * oppFarWidth + _cam1Up * oppFarHeight;
+		otherFrustumEnd = otherFrustumUR + ((otherFrustumUL - otherFrustumUR) / 2);
+		otherFrustumDir = otherFrustumEnd - otherFrustumOrigin;
 
 		// 4aT) calculate the distance between the linePoint and the line-plane intersection point
 		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
-		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
-		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
+		dotNumerator = dot((planePoint - otherFrustumOrigin), planeNormal);
+		dotDenominator = dot(otherFrustumDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bT) calculate the intersection point from the given info
 		////intersection = _ViewCamPos + dis * _ViewCamDir;
-		intersection = pixelCamPos + dis * _ViewCamDir;
+		intersection = otherFrustumOrigin + dis * otherFrustumDir;
 		// 4cT) calculate if the frustum was actually intersected
 		float4 fTIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dT) set the intersection to the tracked frustum intersection point vector
@@ -338,15 +348,18 @@
 		planePoint = frustumFarUR;
 		planeNormal = fRNorm;
 		nearPlanePoint = frustumNearUR;
+		float4 otherFrustumLL = otherFrustumCent - _cam1Right * oppFarWidth - _cam1Up * oppFarHeight;
+		otherFrustumEnd = otherFrustumLL + ((otherFrustumUL - otherFrustumLL) / 2);
+		otherFrustumDir = otherFrustumEnd - otherFrustumOrigin;
 
 		// 4aR) calculate the distance between the linePoint and the line-plane intersection point
 		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
-		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
-		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
+		dotNumerator = dot((planePoint - otherFrustumOrigin), planeNormal);
+		dotDenominator = dot(otherFrustumDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bR) calculate the intersection point from the given info
 		////intersection = _ViewCamPos + dis * _ViewCamDir;
-		intersection = pixelCamPos + dis * _ViewCamDir;
+		intersection = otherFrustumOrigin + dis * otherFrustumDir;
 		// 4cR) calculate if the frustum was actually intersected
 		float4 fRIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dR) set the intersection to the tracked frustum intersection point vector
@@ -356,15 +369,17 @@
 		planePoint = frustumFarLR;
 		planeNormal = fBNorm;
 		nearPlanePoint = frustumNearLR;
+		otherFrustumEnd = otherFrustumUL + ((otherFrustumUR - otherFrustumUL) / 2);
+		otherFrustumDir = otherFrustumEnd - otherFrustumOrigin;
 
 		// 4aB) calculate the distance between the linePoint and the line-plane intersection point
 		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
-		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
-		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
+		dotNumerator = dot((planePoint - otherFrustumOrigin), planeNormal);
+		dotDenominator = dot(otherFrustumDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bB) calculate the intersection point from the given info
 		////intersection = _ViewCamPos + dis * _ViewCamDir;
-		intersection = pixelCamPos + dis * _ViewCamDir;
+		intersection = otherFrustumOrigin + dis * otherFrustumDir;
 		// 4cB) calculate if the frustum was actually intersected
 		float4 fBIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dB) set the intersection to the tracked frustum intersection point vector

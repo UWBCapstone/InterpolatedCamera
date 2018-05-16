@@ -7,7 +7,8 @@ namespace InterpolatedCamera
     public enum InterpolationStyles
     {
         SimpleAverage,
-        ShaderWeighing
+        ShaderWeighing,
+        BoxFilter2
         // , BoxFilter
     }
 }

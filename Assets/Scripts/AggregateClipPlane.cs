@@ -469,6 +469,13 @@ namespace InterpolatedCamera
 
                 return aggregatePlaneMaterial;
             }
+            else if(interpolationStyle == InterpolationStyles.BoxFilter2)
+            {
+                Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedCameraShader_BoxFilter2"));
+                aggregatePlaneMaterial.name = "PlaneMat";
+
+                return aggregatePlaneMaterial;
+            }
             else
             {
                 return null;
