@@ -26,11 +26,19 @@ namespace InterpolatedCamera
         {
             //Invoke("Init", 2.0f);
             Init();
+
+            // Set the material used by the box filter manager
+            var boxFilterManager = GameObject.FindObjectOfType<BoxFilterManager>();
+            if(boxFilterManager != null)
+            {
+                boxFilterManager.AggregatePlaneMaterial = getAggregateClipPlaneObject().GetComponent<MeshRenderer>().material;
+                Debug.Log("Setting Box Filter Manager's material through AggregateClipPlane class...");
+            }
         }
 
-        private void FixedUpdate()
+        private GameObject getAggregateClipPlaneObject()
         {
-
+            return transform.GetChild(0).gameObject;
         }
 
         public void Init()
@@ -441,13 +449,30 @@ namespace InterpolatedCamera
 
         public Material GeneratePlaneMaterial()
         {
-            Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedCameraShader"));
-            //Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedShader2"));
-            aggregatePlaneMaterial.name = "PlaneMat";
+            var interpolationManager = GameObject.FindObjectOfType<InterpolationManager>();
+            InterpolationStyles interpolationStyle = interpolationManager.interpolationMode;
 
-            // Set initial texture array values
+            if (interpolationStyle == InterpolationStyles.SimpleAverage)
+            {
+                Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedCameraShader"));
+                //Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedShader2"));
+                aggregatePlaneMaterial.name = "PlaneMat";
 
-            return aggregatePlaneMaterial;
+                // Set initial texture array values
+
+                return aggregatePlaneMaterial;
+            }
+            else if(interpolationStyle == InterpolationStyles.ShaderWeighing)
+            {
+                Material aggregatePlaneMaterial = new Material(Shader.Find("Custom/InterpolatedCameraShader_SimpleWeighing"));
+                aggregatePlaneMaterial.name = "PlaneMat";
+
+                return aggregatePlaneMaterial;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

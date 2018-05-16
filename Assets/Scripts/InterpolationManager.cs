@@ -9,6 +9,7 @@ namespace InterpolatedCamera
     /// </summary>
     public class InterpolationManager : MonoBehaviour
     {
+        public InterpolationStyles interpolationMode = InterpolationStyles.SimpleAverage;
         public ViewingCamManager viewingCamManager;
         //public Texture2DArray textureArray; // array of the images from the webcams / viewing cameras
         public Texture2D[] textureArray;
@@ -18,11 +19,26 @@ namespace InterpolatedCamera
         //public string CamIndicesToIgnore = "1";
         //private List<int> CamIndicesToIgnoreList;
 
+
+        [HideInInspector]
+        public GameObject aggregatePlaneChild;
+
         public void Start()
         {
             //AssignToAggregateClipPlaneShader();
             Invoke("AssignToAggregateClipPlaneShader", 2.0f);
             //CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
+        }
+
+        public void Awake()
+        {
+            setAggregatePlaneChild();
+        }
+
+        private void setAggregatePlaneChild()
+        {
+            string planeName = GameObject.FindObjectOfType<AggregateClipPlane>().PlaneName;
+            aggregatePlaneChild = GameObject.Find(planeName);
         }
 
         private List<int> ParseCamIndicesToIgnore(string commaSeparatedListOfIndices)
@@ -50,6 +66,11 @@ namespace InterpolatedCamera
 
         public void Update()
         {
+            if(aggregatePlaneChild == null)
+            {
+                setAggregatePlaneChild();
+            }
+
             // Update cam indices to ignore
             //CamIndicesToIgnoreList = ParseCamIndicesToIgnore(CamIndicesToIgnore);
 
@@ -76,6 +97,69 @@ namespace InterpolatedCamera
             // Update UVs
             Vector2[][] uvs = GenerateUVArray();
             canvas.SetUVArray(uvs);
+
+            if(interpolationMode == InterpolationStyles.ShaderWeighing)
+            {
+                Update_ShaderWeighing();
+            }
+        }
+
+        private void Update_ShaderWeighing()
+        {
+            if (aggregatePlaneChild != null)
+            {
+                if (aggregatePlaneChild.GetComponent<MeshRenderer>() != null)
+                {
+                    var planeMat = aggregatePlaneChild.GetComponent<MeshRenderer>().material;
+
+                    // Assign viewing camera positions and directions
+                    planeMat.SetVector("_ViewCamPos", MainCamera.transform.position);
+                    planeMat.SetVector("_ViewCamDir", MainCamera.transform.forward);
+                    planeMat.SetFloat("_ViewCamFar", MainCamera.GetComponent<Camera>().farClipPlane);
+                    for (int i = 0; i < viewingCamManager.ViewingCameras.Length; i++)
+                    {
+                        string posStr = "_CamPos" + i;
+                        string dirStr = "_CamDir" + i;
+                        GameObject viewingCam = viewingCamManager.ViewingCameras[i];
+
+                        planeMat.SetVector(posStr, viewingCam.transform.position);
+                        planeMat.SetVector(dirStr, viewingCam.transform.forward);
+                    }
+
+                    // Assign other values (viewing camera angle, camera right vector, camera up vector, camera near plane distance, camera far plane distance, camera aspect ratio)
+                    for (int i = 0; i < 8; i++) // Hard-coded 8 cameras into shader
+                    {
+                        string angleStr = "_cam" + i + "Angle";
+                        string upStr = "_cam" + i + "Up";
+                        string rightStr = "_cam" + i + "Right";
+                        string nearStr = "_cam" + i + "Near";
+                        string farStr = "_cam" + i + "Far";
+                        string aspectStr = "_cam" + i + "Aspect";
+
+                        if (viewingCamManager.ViewingCameras.Length > i)
+                        {
+                            Camera viewingCam = viewingCamManager.ViewingCameras[i].GetComponent<Camera>();
+
+                            planeMat.SetFloat(angleStr, viewingCam.fieldOfView / 2.0f);
+                            planeMat.SetVector(upStr, viewingCam.transform.up);
+                            planeMat.SetVector(rightStr, viewingCam.transform.right);
+                            planeMat.SetFloat(nearStr, viewingCam.nearClipPlane);
+                            planeMat.SetFloat(farStr, viewingCam.farClipPlane);
+                            planeMat.SetFloat(aspectStr, viewingCam.aspect);
+                        }
+                        else
+                        {
+                            // viewing cam doesn't exist, set zero values
+                            planeMat.SetFloat(angleStr, 0);
+                            planeMat.SetVector(upStr, Vector3.up);
+                            planeMat.SetVector(rightStr, Vector3.right);
+                            planeMat.SetFloat(nearStr, 0.0f);
+                            planeMat.SetFloat(farStr, 0.0f);
+                            planeMat.SetFloat(aspectStr, 0);
+                        }
+                    }
+                }
+            }
         }
 
         //public void AssignToAggregateClipPlaneShader()
@@ -337,5 +421,9 @@ namespace InterpolatedCamera
 
             return BlackTex;
         }
+
+        #region Interpolation Style : Shader Weighing
+
+        #endregion
     }
 }

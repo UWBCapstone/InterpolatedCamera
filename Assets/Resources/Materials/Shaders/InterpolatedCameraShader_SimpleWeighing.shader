@@ -61,6 +61,7 @@
 
 	struct v2f
 	{
+		float4 worldPos : TEXCOORD8;
 		float2 uvTex0 : TEXCOORD0;
 		float2 uvTex1 : TEXCOORD1;
 		float2 uvTex2 : TEXCOORD2;
@@ -107,6 +108,7 @@
 
 	float4 _ViewCamPos;
 	float4 _ViewCamDir;
+	float _ViewCamFar;
 
 	float4 _CamPos0;
 	float4 _CamPos1;
@@ -202,6 +204,8 @@
 		o.uvTex6 = TRANSFORM_TEX(v.uv, _Tex6);
 		o.uvTex7 = TRANSFORM_TEX(v.uv, _Tex7);
 
+		o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+
 		return o;
 	}
 
@@ -209,6 +213,9 @@
 
 	fixed4 frag(v2f i) : SV_Target
 	{
+		#define myCross(vec1, vec2) float3((vec1.y*vec2.z) - (vec2.y*vec1.z), (vec1.z*vec2.x) - (vec2.z*vec1.x), (vec1.x*vec2.y)-(vec2.x*vec1.y))
+		#define GRABPIXEL(weight,kernely) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x, i.uvgrab.y + _GrabTexture_TexelSize.y * kernely*_Size, i.uvgrab.z, i.uvgrab.w))) * weight
+
 		// === UV 0
 		/*
 		float2 deltaXLeft = lerp(_UV0[0].x, _UV0[1].x, i.uvTex0.x);
@@ -241,6 +248,22 @@
 		//float4 texCont = tex2D(_Tex0, uv) * hit;
 		//float4 sumTex = texCont;
 
+
+		//---------------------------------------------------------------------------------------------------------------------------
+		// Do the blending here
+		// Repeat for every plane of every frustum of every texture...
+
+		// 0) Since we're doing this per pixel, we are going to need to figure out the difference between the viewing camera and the given pixel
+		// 0a) Find the center of the plane that the viewing camera is pointing out to
+		float4 centViewCamOrig = _ViewCamPos + _ViewCamDir * _ViewCamFar;
+		// Replace all instances of view cam pos and dir with the centView cam Orig
+		float4 pixelCamPos = i.worldPos - centViewCamOrig;
+		// 0b) Since the vertex position passed in for the shader never changes (due to the plane never changing position), we have to calculate the difference for the pixel's position from the projection camera's Position
+		pixelCamPos += _CamPos0;
+
+		// Do this for the Tex1
+		pixelCamPos = _CamPos1;
+
 		// 1) Calculate the opposite lengths (i.e. the width and height of the plane (divided by 2))
 		float oppFarHeight = _cam0Far * tan(radians(_cam0Angle));
 		float oppFarWidth = _cam0Aspect * oppFarHeight;
@@ -248,7 +271,7 @@
 		float oppNearHeight = _cam0Near * tan(radians(_cam0Angle));
 		float oppNearWidth = _cam0Near * oppNearHeight;
 		float4 centNear = _CamPos0 + _CamDir0 * _cam0Near;
-
+		
 		// 2) Calculate the frustum corners
 		float4 frustumFarLL = centFar - _cam0Right * oppFarWidth - _cam0Up * oppFarHeight;
 		float4 frustumFarUL = centFar - _cam0Right * oppFarWidth + _cam0Up * oppFarHeight;
@@ -260,39 +283,38 @@
 		float4 frustumNearLR = centNear + _cam0Right * oppNearWidth - _cam0Up * oppNearHeight;
 
 		// 3) Calculate frustum plane normals
-		float3 flTemp = cross(frustumNearLL, frustumNearUL);
+		//float3 flTemp = cross(float3(frustumNearLL.x, frustumNearLL.y, frustumNearLL.z), float3(frustumNearUL.x, frustumNearUL.y, frustumNearUL.z));
+		float3 flTemp = cross((frustumNearUL - frustumNearLL), (frustumFarUL - frustumNearUL));
 		float4 fLNorm = float4(flTemp.x, flTemp.y, flTemp.z, 0);
 		//float4 fLNorm = cross(float3(frustumNearLL.x, frustumNearLL.y, frustumNearLL.z), float3(frustumNearUL.x, frustumNearUL.y, frustumNearUL.z));
-		flTemp = cross(frustumNearUL, frustumNearUR);
+		flTemp = cross((frustumNearUR - frustumNearUL), (frustumFarUR - frustumNearUR));
 		float4 fTNorm = float4(flTemp.x, flTemp.y, flTemp.z, 0);
-		flTemp = cross(frustumNearUR, frustumNearLR);
+		flTemp = cross((frustumNearLR - frustumNearUR), (frustumFarLR - frustumNearLR));
 		float4 fRNorm = float4(flTemp.x, flTemp.y, flTemp.z, 0);
-		flTemp = cross(frustumNearLR, frustumNearLL);
+		flTemp = cross((frustumNearLL - frustumNearLR), (frustumFarLL - frustumNearLL));
 		float4 fBNorm = float4(flTemp.x, flTemp.y, flTemp.z, 0);
 
 		// 4) Calculate intersection position of viewing camera dir and all 4 frustum planes
+		// 4-0) Calculate distance to plane intersection
+		////float disPlane = (dot((frustumFarLL - _ViewCamPos), cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))) / (dot(_ViewCamDir, cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))))); // Calculate distance to hit the projection plane
+		float disPlane = (dot((frustumFarLL - pixelCamPos), cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))) / (dot(_ViewCamDir, cross((frustumFarUR - frustumFarUL), (frustumFarUL - frustumFarLL))))); // Calculate distance to hit the projection plane
 		// ******************************************************************************************************************
 		float4 planePoint = frustumFarLL;
 		float4 planeNormal = fLNorm;
 		float4 nearPlanePoint = frustumNearLL;
 
 		// 4aL) calculate the distance between the linePoint and the line-plane intersection point
-		float dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		////float dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		float dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
 		float dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
 		float dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bL) calculate the intersection point from the given info
-		float4 intersection = _ViewCamPos + dis * _ViewCamDir;
+		////float4 intersection = _ViewCamPos + dis * _ViewCamDir;
+		float4 intersection = pixelCamPos + dis * _ViewCamDir;
 		// 4cL) calculate if the frustum was actually intersected
-		float fLIntersected = step(0.001, dotDenominator);
+		float fLIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dL) set the intersection to the tracked frustum intersection point vector
 		float4 fLIntersection = intersection;
-		// 4eL) set the intersected bool to be false if the distance intersection lies beyond the far clip plane or before the near clip plane
-		float4 compA = intersection - nearPlanePoint;
-		float4 compB = planePoint - nearPlanePoint;
-		// 4fL) see if they are pointed in the same direction
-		fLIntersected = step(0.001, dot(compA, compB)) * fLIntersected;
-		// 4gL) see if the intersection actually lies on a plane created by the frustum (is nearer than the far plane point)
-		fLIntersected = step((length(compB) - length(compA)), 0.001) * fLIntersected;
 
 		// ******************************************************************************************************************
 		planePoint = frustumFarUL;
@@ -300,22 +322,17 @@
 		nearPlanePoint = frustumNearUL;
 
 		// 4aT) calculate the distance between the linePoint and the line-plane intersection point
-		dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
 		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bT) calculate the intersection point from the given info
-		intersection = _ViewCamPos + dis * _ViewCamDir;
+		////intersection = _ViewCamPos + dis * _ViewCamDir;
+		intersection = pixelCamPos + dis * _ViewCamDir;
 		// 4cT) calculate if the frustum was actually intersected
-		float4 fTIntersected = step(0.001, dotDenominator);
+		float4 fTIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dT) set the intersection to the tracked frustum intersection point vector
 		float4 fTIntersection = intersection;
-		// 4eT) set the intersected bool to be false if the distance intersection lies beyond the far clip plane or before the near clip plane
-		compA = intersection - nearPlanePoint;
-		compB = planePoint - nearPlanePoint;
-		// 4fT) see if they are pointed in the same direction
-		fTIntersected = step(0.001, dot(compA, compB)) * fTIntersected;
-		// 4gT) see if the intersection actually lies on a plane created by the frustum (is nearer than the far plane point)
-		fTIntersected = step((length(compB) - length(compA)), 0.001) * fTIntersected;
 
 		// ******************************************************************************************************************
 		planePoint = frustumFarUR;
@@ -323,22 +340,17 @@
 		nearPlanePoint = frustumNearUR;
 
 		// 4aR) calculate the distance between the linePoint and the line-plane intersection point
-		dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
 		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bR) calculate the intersection point from the given info
-		intersection = _ViewCamPos + dis * _ViewCamDir;
+		////intersection = _ViewCamPos + dis * _ViewCamDir;
+		intersection = pixelCamPos + dis * _ViewCamDir;
 		// 4cR) calculate if the frustum was actually intersected
-		float4 fRIntersected = step(0.001, dotDenominator);
+		float4 fRIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dR) set the intersection to the tracked frustum intersection point vector
 		float4 fRIntersection = intersection;
-		// 4eR) set the intersected bool to be false if the distance intersection lies beyond the far clip plane or before the near clip plane
-		compA = intersection - nearPlanePoint;
-		compB = planePoint - nearPlanePoint;
-		// 4fR) see if they are pointed in the same direction
-		fRIntersected = step(0.001, dot(compA, compB)) * fLIntersected;
-		// 4gR) see if the intersection actually lies on a plane created by the frustum (is nearer than the far plane point)
-		fRIntersected = step((length(compB) - length(compA)), 0.001) * fRIntersected;
 
 		// ******************************************************************************************************************
 		planePoint = frustumFarLR;
@@ -346,22 +358,17 @@
 		nearPlanePoint = frustumNearLR;
 
 		// 4aB) calculate the distance between the linePoint and the line-plane intersection point
-		dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		////dotNumerator = dot((planePoint - _ViewCamPos), planeNormal);
+		dotNumerator = dot((planePoint - pixelCamPos), planeNormal);
 		dotDenominator = dot(_ViewCamDir, planeNormal); // Assumes lineVec is normalized
 		dis = dotNumerator / dotDenominator; // distance of the float4to the intersection point
 		// 4bB) calculate the intersection point from the given info
-		intersection = _ViewCamPos + dis * _ViewCamDir;
+		////intersection = _ViewCamPos + dis * _ViewCamDir;
+		intersection = pixelCamPos + dis * _ViewCamDir;
 		// 4cB) calculate if the frustum was actually intersected
-		float4 fBIntersected = step(0.001, dotDenominator);
+		float4 fBIntersected = step(0.001, dotDenominator) * step(0.001, dis) * step(dis, disPlane);
 		// 4dB) set the intersection to the tracked frustum intersection point vector
 		float4 fBIntersection = intersection;
-		// 4eB) set the intersected bool to be false if the distance intersection lies beyond the far clip plane or before the near clip plane
-		compA = intersection - nearPlanePoint;
-		compB = planePoint - nearPlanePoint;
-		// 4fB) see if they are pointed in the same direction
-		fBIntersected = step(0.001, dot(compA, compB)) * fBIntersected;
-		// 4gB) see if the intersection actually lies on a plane created by the frustum (is nearer than the far plane point)
-		fBIntersected = step((length(compB) - length(compA)), 0.001) * fBIntersected;
 
 		// 5) Distill the intersection positions into one
 		// Assumes an intersection position has a positive value
@@ -371,7 +378,7 @@
 		// this opposite and adjacent represent the plane if the intersection point was on the clip plane
 		float newOpp = (intersection - _CamPos0) * sin(radians(_cam0Angle));
 		float newAdj = (intersection - _CamPos0) * cos(radians(_cam0Angle));
-		float newCent = _CamPos0 + _CamDir0 * newAdj;
+		float4 newCent = _CamPos0 + _CamDir0 * newAdj;
 
 		// 7) Calculate which oppFar to use
 		// When using the opposite far value, we have to consider whether the new opp value
@@ -380,7 +387,7 @@
 		int validIntersected = step(0.001, oppFar);
 
 		// 8) Calculate the opposites' ratio (linearly scales from 0 at the far ends of the frustum to 1 at the center of the frustum)
-		float oppRatio = (oppFar - newOpp) / oppFar;
+		float oppRatio = (oppFar - abs(newOpp)) / oppFar;
 		oppRatio = validIntersected * oppRatio; // Handle cases where the frustum isn't intersected at all by setting its value to 0
 
 		// 9) Sum contribution of oppRatio
@@ -389,7 +396,7 @@
 		float hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1) * step(0, oppRatio);
 		float numHits = hit;
 		
-		//// === UV 1
+		/*//// === UV 1
 
 		leftX = lerp(_UV1[0].x, _UV1[1].x, 1);
 		rightX = lerp(_UV1[3].x, _UV1[2].x, 1);
@@ -421,12 +428,12 @@
 		topY = lerp(_UV2[1].y, _UV2[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex2.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex2, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex2, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -444,12 +451,12 @@
 		topY = lerp(_UV3[1].y, _UV3[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex3.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex3, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex3, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -467,12 +474,12 @@
 		topY = lerp(_UV4[1].y, _UV4[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex4.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex4, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex4, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -490,12 +497,12 @@
 		topY = lerp(_UV5[1].y, _UV5[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex5.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex5, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex5, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -513,12 +520,12 @@
 		topY = lerp(_UV6[1].y, _UV6[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex6.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex6, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex6, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -536,12 +543,12 @@
 		topY = lerp(_UV7[1].y, _UV7[2].y, 1);
 		UVy = lerp(bottomY, topY, i.uvTex7.y);
 
-		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
-		numHits = numHits + hit;
+		//hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1);
+		//numHits = numHits + hit;
 
 		uv = float2(UVx, UVy);
-		texCont = tex2D(_Tex7, uv) * hit;
-		sumTex = sumTex + texCont;
+		//texCont = tex2D(_Tex7, uv) * hit;
+		//sumTex = sumTex + texCont;
 
 		// -- REPLACE LINE HERE
 
@@ -549,7 +556,7 @@
 		sumTex = sumTex + texCont;
 		hit = step(0, UVx) * step(UVx, 1) * step(0, UVy) * step(UVy, 1) * step(0, oppRatio);
 		numHits = numHits + hit;
-
+		*/
 		// === Divide total texture found by number of hits found
 		fixed4 c = sumTex / numHits;
 

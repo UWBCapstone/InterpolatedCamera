@@ -162,7 +162,9 @@ namespace InterpolatedCamera
                     Vector3 cent = dpr.Center;
                     //Vector3 dir = new Vector3(PosX.value, PosY.value, dpr.Center.z) - cent;
                     //Vector3 dir = -(new Vector3(PosX.value, PosY.value, PosZ.value) - ((cent - origCent) / planeScale));
-                    Vector3 dir = (new Vector3(PosX.value, PosY.value, PosZ.value) - (cent - origCent));
+                    Vector3 amtMoved = this.transform.position - Vector3.zero;
+                    //Vector3 dir = (new Vector3(PosX.value, PosY.value, PosZ.value) - (cent - origCent));
+                    Vector3 dir = (new Vector3(-PosX.value, -PosY.value, PosZ.value) - amtMoved);
                     //Debug.Log("OrigCent = " + origCent);
                     //dir = new Vector3(dir.x, dir.y, Mathf.Abs(dir.z));
                     //Vector3 planeDir = new Vector3(PosX.value * planeScale, PosY.value * planeScale, PosZ.value * planeScale) - (cent - origCent);
@@ -187,12 +189,14 @@ namespace InterpolatedCamera
                         dir.z = 0;
                         dpr.Translate(new Vector3(0, 0, -dpr.Center.z));
                     }
-
-                    //Debug.Log("dir.z = " + dir.z);
-                    dpr.Translate(dir);
-                    //Debug.Log("Translating dpr by " + dir);
-                    //dpr.Translate(planeDir);
-                    WorldObjectParent.transform.Translate(-dir);
+                    
+                    //dpr.Translate(dir);
+                    foreach(var viewingCam in viewingCamManager.ViewingCameras)
+                    {
+                        viewingCam.transform.Translate(dir);
+                    }
+                    WorldObjectParent.transform.Translate(dir);
+                    this.transform.Translate(dir);
 
                     //AdjustViewingCams();
 
